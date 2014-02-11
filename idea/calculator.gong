@@ -1,0 +1,8 @@
+name calculator
+
+server add(a int, b int)(c int)
+server subtract(a int, b int)(c int)
+server oneway clearHistory()
+
+client oneway displayNotification(subject string, text string)
+client askQuestion(question string)(answer string)
