@@ -1,9 +1,9 @@
-angular.module('gong-calculator', {
+angular.module('ango-calculator', {
   setup: function() {
-    // setup for gong-calculator 
+    // setup for ango-calculator 
   },
   teardown: function() {
-    //teardown for gong-calculator
+    //teardown for ango-calculator
   }
 }).factory('GongCalculator', [function () {
 	var service = {};

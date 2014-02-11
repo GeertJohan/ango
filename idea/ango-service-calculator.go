@@ -8,12 +8,12 @@ import (
 // CalculatorHandlerIface should be implemented by the implementation part of the protocol
 type CalculatorHandlerIface interface {
 	// OnConnect is called when the connection was successfully set up
-	// default method for any gong serviceHandler
+	// default method for any ango serviceHandler
 	OnConnect()
 
 	// OnDisconnect is called when the connection was closed.
 	// When err is nil, the connection was closed by the client or service on purpose (call to .Close())
-	// default method for any gong serviceHandler
+	// default method for any ango serviceHandler
 	OnDisconnect(err error)
 
 	// Add should add a and b and return the result
