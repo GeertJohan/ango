@@ -1,6 +1,10 @@
-## Go Angular communication
+## Ango: Angular <-> Go communication
 
-ango is a tool that generates a protocol for communication between [Go](http://golang.org) and [AngularJS](http://angularjs.org) over http/websockets.
+`ango` is a tool that generates a protocol for communication between [Go](http://golang.org) and [AngularJS](http://angularjs.org) over http/websockets.
+
+**This project is still under development, please do look arround and let me know if you have good idea's**
+
+### Goals
 
 The main goals are:
 
