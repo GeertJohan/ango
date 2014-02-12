@@ -7,21 +7,23 @@
 package parser
 
 import (
-	//++
+	//++ yacc imports
 )
 
 %}
 
 %union {
-	num *big.Rat
+	txt string
 }
 
-%type	<num>	expr expr1 expr2 expr3
+%type	<txt>	expr expr1 expr2 expr3
 
-%token	<num>	NUM
+%token	<txt>	IDENT SERVER CLIENT 
+
+%%
+
+IDENT
 
 %%
 
-
-
-%%
+//++ yacc helper functions

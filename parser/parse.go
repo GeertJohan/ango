@@ -23,5 +23,6 @@ func verbosef(format string, data ...interface{}) {
 // Parse parses an ango definition stream and returns a *Service or an error.
 func Parse(rd io.Reader) (*Service, error) {
 	verbosef("do stuff with reader\n")
-	return nil, ErrNotImlemented
+
+	angoParse(NewLexer(rd))
 }
