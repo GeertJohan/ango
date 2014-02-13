@@ -24,7 +24,7 @@ NEEDS THINKING: Code generated for Go can be copied into any go package. The cod
 
 For angular a single `.js` file is generated  holding an angular module. The module can be included by any other angular module.
 
-### Terms
+### Terminology
 
 A **service** exists of one or more **procedures** server- and/or client-side.
 A **procedure** within a service resides client- or server-side, and can be called by the other party.
