@@ -39,6 +39,7 @@ func main() {
 	}
 	defer inputFile.Close()
 
+	parser.PrintParseErrors = false
 	parseTree, err := parser.Parse(inputFile)
 	if err != nil {
 		fmt.Printf("Error parsing ango definitions: %s\n", err)

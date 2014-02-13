@@ -14,7 +14,7 @@ type ParseError struct {
 
 func (pe *ParseError) Error() string {
 	if len(pe.Extra) > 0 {
-		return fmt.Sprintf("%s at line %d. %s", pe.Type, pe.Line, pe.Extra)
+		return fmt.Sprintf("%s at line %d: %s", pe.Type, pe.Line, pe.Extra)
 	}
 	return fmt.Sprintf("%s at line %d", pe.Type, pe.Line)
 }

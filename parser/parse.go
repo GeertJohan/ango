@@ -30,7 +30,7 @@ func init() {
 		// used to capture procedure definition (and partials)
 		rParam            = rOptWhitepsace + rIdentifier + rMustWhitespace + rTypes + rOptWhitepsace
 		rParameters       = `\((?:` + rParam + `)?(?:,` + rParam + `)*\)`
-		rProcedureCapture = `^(server|client)` + rMustWhitespace + `((?:oneway` + rMustWhitespace + `)?)(` + rIdentifier + `)` + rOptWhitepsace + `(` + rParameters + `)` + rOptWhitepsace + `((?:` + rParameters + `)?)` + rOptWhitepsace + `$`
+		rProcedureCapture = `^(server|client)` + rMustWhitespace + `(?:(oneway)` + rMustWhitespace + `)?(` + rIdentifier + `)` + rOptWhitepsace + `(` + rParameters + `)` + rOptWhitepsace + `((?:` + rParameters + `)?)` + rOptWhitepsace + `$`
 
 		// used to capture parameters
 		rParamCapture = rOptWhitepsace + `(` + rIdentifier + `)` + rMustWhitespace + `(` + rTypes + `)` + rOptWhitepsace
@@ -64,6 +64,10 @@ var (
 
 	// ParseErrDuplicateParameterIdentifier indicates a duplicate parameter identifier (argument or return value)
 	ParseErrDuplicateParameterIdentifier = "duplicate parameter identifier (argument or return value)"
+
+	// ParseErrUnexpectedReturnParameters indicates that return parameters were given, or just "()".
+	// This is probably unexpected because the procedure is a oneway procedure.
+	ParseErrUnexpectedReturnParameters = "unexpected return parameters (oneway procedure?)"
 )
 
 // Verbose, when true this package will send verbose information to stdout.
@@ -136,8 +140,9 @@ func Parse(rd io.Reader) (*Service, error) {
 		}
 		if _, exists := procMap[proc.Name]; exists {
 			perr := &ParseError{
-				Line: lr.ln,
-				Type: ParseErrDuplicateProcedureIdentifier,
+				Line:  lr.ln,
+				Type:  ParseErrDuplicateProcedureIdentifier,
+				Extra: fmt.Sprintf(`"%s"`, proc.Name),
 			}
 			printParseErrorf(perr.Error())
 			return nil, perr
@@ -179,6 +184,11 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 	}
 
 	proc.Oneway = (matches[2] == "oneway")
+	if proc.Oneway && len(matches[5]) > 0 {
+		return nil, &ParseError{
+			Type: ParseErrUnexpectedReturnParameters,
+		}
+	}
 
 	proc.Name = matches[3]
 
@@ -213,7 +223,7 @@ func parseParams(text string, list *[]*Param) error {
 		if len(matches) != 3 {
 			return &ParseError{
 				Type:  ParseErrInvalidParameter,
-				Extra: fmt.Sprintf("at position %d", i+1),
+				Extra: fmt.Sprintf(`at position %d: "%s"`, i+1, paramString),
 			}
 		}
 
@@ -225,7 +235,7 @@ func parseParams(text string, list *[]*Param) error {
 		if taken[name] { // ++ TODO: doesnt work??
 			return &ParseError{
 				Type:  ParseErrDuplicateParameterIdentifier,
-				Extra: fmt.Sprintf("at position %d", i+1),
+				Extra: fmt.Sprintf(`at position %d: "%s"`, i+1, name),
 			}
 		}
 		taken[name] = true
