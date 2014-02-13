@@ -1,7 +1,5 @@
 /ango
 /ango.exe
 
-# ignore generated files, at least for now
-/parser/ango.nn.go
-/parser/y.go
-/parser/y.output
+# ignore example output dir
+/example/output
