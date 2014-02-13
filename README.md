@@ -7,7 +7,6 @@
 ### Goals
 
 The main goals are:
-
  - async server > client RPC
  - async client > server RPC
  - typed arguments and return values (see types below)
@@ -15,8 +14,13 @@ The main goals are:
  - integrate into AngularJS as includable module + ng service
  - underlying protocol and communication is not directly visible for user. Calls feel native/local.
 
-Code generated for Go can be copied into any go package. The code doesn't form a package itself.
-TODO: needs thought, pro's and con's for seperate package...
+What I don't want to do:
+ - runtime discovery of available procedures
+ - A generic protocol designed for multiple types of servers/clients
+
+Therefore I chose to generate go and javascript, so both server and client hold all information to communicate.
+
+NEEDS THINKING: Code generated for Go can be copied into any go package. The code doesn't form a package itself.
 
 For angular a single `.js` file is generated  holding an angular module. The module can be included by any other angular module.
 
