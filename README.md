@@ -21,7 +21,7 @@ What I don't want to do:
 Therefore I chose to create a tool that generates Go and Angular/javascript, so both server and client hold all information to communicate and know whats comming at any time.
 
 Code generated for Go can be copied into any go package. The code doesn't form a package itself.
-(NEEDS THINKING: this has serious drawbacks on the generated code (need to use scope to hide variables from the rest of pacakge). However, having it in-package does have some good pro's..)
+NEEDS THINKING: this has drawbacks on the generated code (need to use scope to hide inner variables from the rest of package).
 
 For angular a single `.js` file is generated  holding an angular module. The module can be included by any other angular module.
 
