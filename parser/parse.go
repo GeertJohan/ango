@@ -65,9 +65,12 @@ var (
 	// ParseErrDuplicateParameterIdentifier indicates a duplicate parameter identifier (argument or return value)
 	ParseErrDuplicateParameterIdentifier = "duplicate parameter identifier (argument or return value)"
 
-	// ParseErrUnexpectedReturnParameters indicates that return parameters were given, or just "()".
+	// ParseErrUnexpectedReturnParameters indicates that return parameters were given.
 	// This is probably unexpected because the procedure is a oneway procedure.
 	ParseErrUnexpectedReturnParameters = "unexpected return parameters (oneway procedure?)"
+
+	// ParseErrEmptyReturnGroup indicates parenthesis for return values are given, but no actual return parameters inside them.
+	ParseErrEmptyReturnGroup = "empty return group"
 )
 
 // Verbose, when true this package will send verbose information to stdout.
@@ -194,6 +197,11 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 
 	parseParams(matches[4], &proc.Args)
 	parseParams(matches[5], &proc.Rets)
+	if len(matches[5]) > 0 && len(proc.Rets) == 0 {
+		return nil, &ParseError{
+			Type: ParseErrEmptyReturnGroup,
+		}
+	}
 
 	return proc, nil
 }
