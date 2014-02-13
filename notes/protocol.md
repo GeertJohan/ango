@@ -42,13 +42,12 @@ The request and response formats are equal for both client->server and server->c
 ### Data object
 
 The fields on the data object depend on the arguments or return values for a procedure.
-Given this ango definition: `server askQuestion(question string, number int)(answer string)`.
+Given this ango definition: `server askQuestion(question string)(answer string)`.
 
 Data structure on `type: "req"`
 ```json
 {
-	"question": "What is the answer to life, the universe, and everything?",
-	"number": 1337
+	"question": "What is the answer to life, the universe, and everything?"
 }
 ```
 
