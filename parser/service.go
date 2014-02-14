@@ -31,6 +31,7 @@ type Procedure struct {
 // ProcedureType indicates wether a procedure is server- or client-side
 type ProcedureType string
 
+// ProcedureType's
 var (
 	ServerProcedure = ProcedureType("string")
 	ClientProcedure = ProcedureType("client")
@@ -45,6 +46,7 @@ type Param struct {
 // ParamType is the type of a parameter
 type ParamType string
 
+// ParamType's
 var (
 	ParamTypeInt    = ParamType("int")
 	ParamTypeUint   = ParamType("uint")
