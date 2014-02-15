@@ -1,5 +1,9 @@
 /ango
 /ango.exe
 
-# ignore example output dir
-/example/output
+/example/example
+/example/example.exe
+
+# ignore any generated code
+*.gen.js
+*.gen.go

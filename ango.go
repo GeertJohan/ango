@@ -10,12 +10,18 @@ import (
 
 var flagsParser *goflags.Parser
 var flags struct {
-	Verbose   bool   `long:"verbose" short:"v" description:"Enable verbose logging"`
-	OutputDir string `long:"output" short:"o" description:"Output directory" required:"true"`
-	InputFile string `long:"input" short:"i" description:"Input file" required:"true"`
+	Verbose        bool   `long:"verbose" short:"v" description:"Enable verbose logging"`
+	ForceOverwrite bool   `long:"force-overwrite" description:"Force overwrite (don't ask user)"`
+	InputFile      string `long:"input" short:"i" description:"Input file" required:"true"`
+	GoDir          string `long:"go" description:"Go output directory"`
+	JsDir          string `long:"js" description:"Javascript output directory"`
 }
 
+// Version constant is used in calculating the protocol version
+const Version = `0.1`
+
 func main() {
+	var err error
 	flagsParser := goflags.NewParser(&flags, goflags.Default)
 
 	args, err := flagsParser.Parse()
@@ -32,6 +38,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	setupTemplates()
+
 	inputFile, err := os.Open(flags.InputFile)
 	if err != nil {
 		fmt.Printf("Error opening input file: %s\n", err)
@@ -46,7 +54,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	generate(parseTree)
+	protocolVersion := calculateVersion(parseTree)
+	verbosef("Calculated protocol version is: %s\n", protocolVersion)
+
+	// warn user about abscent --go and --js
+	// give version string
+	if len(flags.GoDir) == 0 && len(flags.JsDir) == 0 {
+		fmt.Printf("Parsed input file. There were no errors.\nUse options `--go <outputDir>` and `--js <outputDir>` to generate code.\nVersion string is: %s\n", protocolVersion)
+	}
+
+	if len(flags.JsDir) > 0 {
+		generateJs(parseTree)
+	}
+
+	if len(flags.GoDir) > 0 {
+		generateGo(parseTree)
+	}
 
 	verbosef("ango main() completed\n")
 }

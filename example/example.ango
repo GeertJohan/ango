@@ -1,6 +1,7 @@
-name exampleService
+name chatService
 
 server add(a int, b int)(c int)
+
 server oneway notify(text string)
 //server subtract(a int, b int)(c int)
 //server oneway clearHistory()
