@@ -195,8 +195,14 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 
 	proc.Name = matches[3]
 
-	parseParams(matches[4], &proc.Args)
-	parseParams(matches[5], &proc.Rets)
+	perr := parseParams(matches[4], &proc.Args)
+	if perr != nil {
+		return nil, perr
+	}
+	perr = parseParams(matches[5], &proc.Rets)
+	if perr != nil {
+		return nil, perr
+	}
 	if len(matches[5]) > 0 && len(proc.Rets) == 0 {
 		return nil, &ParseError{
 			Type: ParseErrEmptyReturnGroup,
@@ -206,7 +212,7 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 	return proc, nil
 }
 
-func parseParams(text string, list *[]*Param) error {
+func parseParams(text string, list *[]*Param) *ParseError {
 	if len(text) < 3 {
 		// fast return for no params or ()
 		return nil
@@ -240,7 +246,7 @@ func parseParams(text string, list *[]*Param) error {
 		tipe := matches[2]
 
 		// check if name (identifier) is taken
-		if taken[name] { // ++ TODO: doesnt work??
+		if taken[name] {
 			return &ParseError{
 				Type:  ParseErrDuplicateParameterIdentifier,
 				Extra: fmt.Sprintf(`at position %d: "%s"`, i+1, name),
