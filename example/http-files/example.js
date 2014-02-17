@@ -1,4 +1,4 @@
-var app = angular.module('app', ['chatService']);
+var app = angular.module('chatExample', ['chatService']);
 
 app.config(function(chatServiceProvider) {
 	chatServiceProvider.setUri("");
@@ -7,6 +7,7 @@ app.config(function(chatServiceProvider) {
 	});
 });
 
-app.controller('chatCtrl', function($scope, chatService) {
+app.controller('mainCtrl', function($scope, chatService) {
 	$scope.foo = "bar";
+	console.log(chatService.getWsPath());
 })
