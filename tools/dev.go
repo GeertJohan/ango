@@ -29,6 +29,8 @@ var (
 	stopWg sync.WaitGroup
 )
 
+const exampleAngoFile = "example/chatService.ango"
+
 type CheckWriter struct {
 	wr     io.Writer
 	filter string
@@ -165,15 +167,34 @@ func watchExampleAngo() {
 		stop(1)
 		return
 	}
+	err = watcher.WatchFlags(exampleAngoFile, fsnotify.FSN_MODIFY)
+	if err != nil {
+		fmt.Printf("Error starting watch on example ango file: %s\n", err)
+		stop(1)
+		return
+	}
 	defer watcher.Close()
-	<-stopCh
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-watcher.Event:
+			angoExample()
+		case err := <-watcher.Error:
+			if err != nil {
+				fmt.Printf("Error watching example ango file: %s\n", err)
+				stop(1)
+				return
+			}
+		}
+	}
 }
 
 func angoExample() {
 	stopWg.Add(1)
 	defer stopWg.Done()
 	fmt.Println("Running ango tool for example/chatService.ango")
-	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", "example/chatService.ango", "--js", "example/http-files", "--force-overwrite") // "--go", "example",
+	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--js", "example/http-files", "--force-overwrite") // "--go", "example",
 	cmdAngoExample.Stdin = os.Stdin
 	cmdAngoExample.Stdout = sgr.NewColorWriter(os.Stdout, sgr.FgBlue, false)
 	cmdAngoExample.Stderr = sgr.NewColorWriter(os.Stderr, sgr.FgBlue, false)
