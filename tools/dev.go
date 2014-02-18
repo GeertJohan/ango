@@ -49,24 +49,26 @@ func main() {
 	wd, err = os.Getwd()
 	if err != nil {
 		fmt.Printf("Error getting wd: %s\n", err)
-		stop(nil)
+		stop(1)
 	}
 
 	pkg, err = build.ImportDir(wd, 0)
 	if err != nil {
 		fmt.Printf("Error loading package: %s\n", err)
-		stop(nil)
+		stop(1)
 	}
 
 	if pkg.Name != "main" || !pkg.IsCommand() || filepath.Base(wd) != "ango" {
 		fmt.Println("Is tool executed from the right directory? (github.com/GeertJohan/ango or a fork)?")
 		fmt.Printf("Current package (%s) is invalid.\n", pkg.Name)
-		stop(nil)
+		stop(1)
 	}
 
 	go rerunExample()
 
 	go rerunAngo()
+
+	go watchExampleAngo()
 
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Kill, os.Interrupt)
@@ -74,28 +76,28 @@ func main() {
 	signal.Stop(sigChan)
 
 	fmt.Printf("Received %s, closing...\n", sig)
-	stop(sig)
+	if sig == os.Interrupt {
+		stop(0)
+	} else {
+		stop(1)
+	}
+	select {}
 }
 
-func stop(sig os.Signal) {
-	var exitCode int
-	if sig != os.Interrupt {
-		exitCode = 1
-	}
-	if sig == nil {
-		sig = os.Interrupt
-	}
+func stop(exitCode int) {
+	go func() {
+		// synced stop
+		close(stopCh)
+		stopWg.Wait()
 
-	// synced stop
-	close(stopCh)
-	stopWg.Wait()
-
-	// os.Exit(..)
-	os.Exit(exitCode)
+		// os.Exit(..)
+		os.Exit(exitCode)
+	}()
 }
 
 func rerunExample() {
 	stopWg.Add(1)
+	defer stopWg.Done()
 
 	cmdRerun := exec.Command("rerun", filepath.Join(pkg.ImportPath, "example"))
 	cmdRerun.Stdin = os.Stdin
@@ -104,16 +106,22 @@ func rerunExample() {
 	err := cmdRerun.Start()
 	if err != nil {
 		fmt.Printf("Error running rerun example: %s\n", err)
+		stop(1)
 	}
 	<-stopCh
 	if cmdRerun.Process != nil {
 		cmdRerun.Process.Signal(os.Interrupt)
 	}
-	stopWg.Done()
+	err = cmdRerun.Wait()
+	if err != nil && err.Error() != "exit status 2" {
+		fmt.Printf("Error stopping rerun example: %s\n", err)
+		return
+	}
 }
 
 func rerunAngo() {
 	stopWg.Add(1)
+	defer stopWg.Done()
 
 	cmdRerun := exec.Command("rerun", "-build-only", pkg.ImportPath)
 	cmdRerun.Stdin = os.Stdin
@@ -128,17 +136,35 @@ func rerunAngo() {
 	cmdRerun.Stderr = sgr.NewColorWriter(cw, sgr.FgCyan, false)
 	err := cmdRerun.Start()
 	if err != nil {
-		fmt.Printf("Error running rerun example: %s\n", err)
+		fmt.Printf("Error running rerun ango build: %s\n", err)
+		stop(1)
 	}
 	<-stopCh
 	if cmdRerun.Process != nil {
 		cmdRerun.Process.Signal(os.Interrupt)
 	}
-	stopWg.Done()
+	err = cmdRerun.Wait()
+	if err != nil && err.Error() != "exit status 2" {
+		fmt.Printf("Error stopping rerun ango build: %s\n", err)
+		return
+	}
+}
+
+func watchExampleAngo() {
+	stopWg.Add(1)
+	defer stopWg.Done()
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Printf("")
+	}
+	defer watcher.Close()
+	<-stopCh
 }
 
 func angoExample() {
 	stopWg.Add(1)
+	defer stopWg.Done()
 	fmt.Println("Running ango tool for example/example.ango")
 	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", "example/example.ango", "--js", "example/http-files", "--force-overwrite") // "--go", "example",
 	cmdAngoExample.Stdin = os.Stdin
@@ -148,5 +174,4 @@ func angoExample() {
 	if err != nil {
 		fmt.Printf("Error running ango tool: %s\n", err)
 	}
-	stopWg.Done()
 }
