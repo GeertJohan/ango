@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/GeertJohan/ango/parser"
 	goflags "github.com/jessevdk/go-flags"
@@ -19,6 +20,10 @@ var flags struct {
 
 // Version constant is used in calculating the protocol version
 const Version = `0.1`
+
+var (
+	ErrNotImplementedYet = errors.New("not implemented yet")
+)
 
 func main() {
 	var err error
@@ -64,11 +69,19 @@ func main() {
 	}
 
 	if len(flags.JsDir) > 0 {
-		generateJs(parseTree)
+		err = generateJs(parseTree)
+		if err != nil {
+			fmt.Printf("Error generating Javascript: %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if len(flags.GoDir) > 0 {
-		generateGo(parseTree)
+		err = generateGo(parseTree)
+		if err != nil {
+			fmt.Printf("Error generating Go: %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	verbosef("ango main() completed\n")

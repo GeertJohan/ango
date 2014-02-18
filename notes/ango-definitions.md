@@ -24,3 +24,7 @@ Available types (`argType` and `retType`) are defined in [types.md](types.md).
 
 ### Example
 There's an example `.ango` file at [/example/example.ango](/example/example.ango)
+
+
+### Idea's
+ - appendix `notifies(typeA)` for a server procedure, which adds a notify argument to the server procedure handler. The notify argument (`type func(typeA)`) can be called by the procedure implementation.

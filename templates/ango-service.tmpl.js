@@ -1,5 +1,5 @@
-angular.module('{{.ServiceName}}', [])
-.provider('{{.ServiceName}}', function($q) {
+angular.module('ango-{{.ServiceName}}fdsa', [])
+.provider('{{.ServiceName}}', function() {
 
 	//++ do event handlers for incomming calls?
 	//++ or, require provider or service to be set up with an object having functions for all handlers?
@@ -27,28 +27,30 @@ angular.module('{{.ServiceName}}', [])
 	//++ when returning string, an error occurred. (in defered: reject("error message"))
 	//++ when returning object, ok, and values are object. (in defered: resolve({field: "foo"}))
 
-
 	// PROVIDER VARIABLES AND SETTERS
 	var wsPath = "/websocket-ango-{{.ServiceName}}";
 	this.setWsPath = function(path) {
 		wsPath = path;
 	};
+	this.setUri = function () {};
+	this.handle = function () {};
 
 	// SERVICE CREATOR
-	this.$get = function() {
+	this.$get = ['$q', function($q) {
 		var service = {};
 
 		// PROCEDURES, as defined in .ango file
 		service.add = function(a, b) {
 			//++ return deferred
-		}
+			//++ will use $q
+		};
 
 		service.getWsPath = function() {
 			return wsPath;
-		}
+		};
 
 		//++ open ws
 		//++ setup queue
-		return new service(wsPath);
-	};
-})
+		return service;
+	}];
+});
