@@ -47,4 +47,4 @@ This performs the following:
  - Re-genereate example ango service when ango tool was re-build or when .ango file changes.
 
 ### License
-This project is licensed under a Simplified BSD license. Please read the [LICENSE file][LICENSE].
+This project is licensed under a Simplified BSD license. Please read the [LICENSE file](LICENSE).
