@@ -50,18 +50,21 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error getting wd: %s\n", err)
 		stop(1)
+		select {}
 	}
 
 	pkg, err = build.ImportDir(wd, 0)
 	if err != nil {
 		fmt.Printf("Error loading package: %s\n", err)
 		stop(1)
+		select {}
 	}
 
 	if pkg.Name != "main" || !pkg.IsCommand() || filepath.Base(wd) != "ango" {
 		fmt.Println("Is tool executed from the right directory? (github.com/GeertJohan/ango or a fork)?")
 		fmt.Printf("Current package (%s) is invalid.\n", pkg.Name)
 		stop(1)
+		select {}
 	}
 
 	go rerunExample()
@@ -107,6 +110,7 @@ func rerunExample() {
 	if err != nil {
 		fmt.Printf("Error running rerun example: %s\n", err)
 		stop(1)
+		return
 	}
 	<-stopCh
 	if cmdRerun.Process != nil {
@@ -138,6 +142,7 @@ func rerunAngo() {
 	if err != nil {
 		fmt.Printf("Error running rerun ango build: %s\n", err)
 		stop(1)
+		return
 	}
 	<-stopCh
 	if cmdRerun.Process != nil {
@@ -156,7 +161,9 @@ func watchExampleAngo() {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		fmt.Printf("")
+		fmt.Printf("Error starting watcher: %s\n", err)
+		stop(1)
+		return
 	}
 	defer watcher.Close()
 	<-stopCh
