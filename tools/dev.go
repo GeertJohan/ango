@@ -167,13 +167,13 @@ func watchExampleAngo() {
 		stop(1)
 		return
 	}
+	defer watcher.Close()
 	err = watcher.WatchFlags(exampleAngoFile, fsnotify.FSN_MODIFY)
 	if err != nil {
 		fmt.Printf("Error starting watch on example ango file: %s\n", err)
 		stop(1)
 		return
 	}
-	defer watcher.Close()
 	for {
 		select {
 		case <-stopCh:
