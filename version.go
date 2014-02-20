@@ -9,6 +9,27 @@ import (
 	"sort"
 )
 
+var (
+	versionNumber  string
+	versionHash    string
+	instanceUnique = randomString(10)
+)
+
+func versionFull() string {
+	// is this a 'release' build?
+	if len(versionNumber) > 0 {
+		return versionNumber + "-" + versionHash
+	}
+
+	// is this a 'latest' build?
+	if len(versionHash) > 0 {
+		return "latest-" + versionHash
+	}
+
+	// asume local (development?) build
+	return "local-" + instanceUnique
+}
+
 func calculateVersion(service *parser.Service) string {
 	hasher := sha256.New()
 

@@ -18,9 +18,6 @@ var flags struct {
 	JsDir          string `long:"js" description:"Javascript output directory"`
 }
 
-// Version constant is used in calculating the protocol version
-const Version = `0.1`
-
 var (
 	ErrNotImplementedYet = errors.New("not implemented yet")
 )

@@ -4,6 +4,11 @@
 /example/example
 /example/example.exe
 
+/dev
+/tools/dev/dev
+/publish
+/tools/publish/publish
+
 # ignore any generated code
 *.gen.js
 *.gen.go
