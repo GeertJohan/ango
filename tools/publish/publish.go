@@ -36,6 +36,8 @@ func publishSuffix() string {
 }
 
 func main() {
+	preseveArtifacts()
+
 	getBranch()
 
 	fmt.Printf("Current version is: %s\n", fullVersion())
@@ -45,6 +47,17 @@ func main() {
 	runRice()
 
 	moveFile()
+}
+
+func preseveArtifacts() {
+	artifacts := []string{"ango-release", "ango-latest"}
+	for _, art := range artifacts {
+		err := exec.Command("wget", "https://drone.io/github.com/GeertJohan/ango/files/"+art).Run()
+		if err != nil {
+			fmt.Printf("Error preserving artifact '%s': %s\n", art, err)
+			os.Exit(1)
+		}
+	}
 }
 
 func getBranch() {
