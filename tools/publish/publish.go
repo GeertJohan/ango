@@ -55,7 +55,7 @@ func preseveArtifacts() {
 		cmd := exec.Command("wget", "https://drone.io/github.com/GeertJohan/ango/files/"+art)
 		err := cmd.Run()
 		if err != nil {
-			if err.Error() != "exit status 8" {
+			if err.Error() == "exit status 8" {
 				fmt.Printf("Unable to preserve artifact '%s'\n", art)
 				continue
 			}
