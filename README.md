@@ -42,8 +42,7 @@ Several files describe the working of ango.
 [![Build Status](https://drone.io/github.com/GeertJohan/ango/status.png)](https://drone.io/github.com/GeertJohan/ango/latest)
 
 This project involves several packages. There's a simple tool to automatically run and update the workspace as you go.
-This tool depends on `rerun` and `go.sgr`. Install them using `go get github.com/skelterjohn/rerun` and `go get github.com/foize/go.sgr`.
-To run the tool, cd into the root folder (ango) and run: `go run tools/dev.go`.
+To run the tool, cd into the root folder (ango) and run: `sh tools/dev/run.sh`.
 This performs the following:
  - Watch ango source (and imported packages) and re-build on change.
  - Watch example source (and imported packages) and re-build on change.
