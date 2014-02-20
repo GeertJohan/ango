@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -45,6 +46,8 @@ func (c *CheckWriter) Write(b []byte) (n int, err error) {
 	return n, err
 }
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	var err error
 	fmt.Println("Starting ango dev tool.")
 
