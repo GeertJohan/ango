@@ -48,5 +48,8 @@ This performs the following:
  - Watch example source (and imported packages) and re-build on change.
  - Re-genereate example ango service when ango tool was re-build or when .ango file changes.
 
+### Download
+Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).
+
 ### License
 This project is licensed under a Simplified BSD license. Please read the [LICENSE file](LICENSE).
