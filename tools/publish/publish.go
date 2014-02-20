@@ -52,8 +52,9 @@ func main() {
 func preseveArtifacts() {
 	artifacts := []string{"ango-release", "ango-latest"}
 	for _, art := range artifacts {
-		err := exec.Command("wget", "https://drone.io/github.com/GeertJohan/ango/files/"+art).Run()
-		if err != nil {
+		cmd := exec.Command("wget", "https://drone.io/github.com/GeertJohan/ango/files/"+art)
+		err := cmd.Run()
+		if err != nil && err.Error() != "exit status 8" {
 			fmt.Printf("Error preserving artifact '%s': %s\n", art, err)
 			os.Exit(1)
 		}
