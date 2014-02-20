@@ -37,7 +37,7 @@ func calculateVersion(service *parser.Service) string {
 	wr := io.Writer(hasher)
 
 	// write ango version
-	fmt.Fprintln(wr, Version)
+	fmt.Fprintln(wr, versionFull())
 
 	// write service name
 	fmt.Fprintln(wr, service.Name)

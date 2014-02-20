@@ -23,6 +23,8 @@ var (
 )
 
 func main() {
+	fmt.Printf("ango version %s\n", versionFull())
+
 	var err error
 	flagsParser := goflags.NewParser(&flags, goflags.Default)
 

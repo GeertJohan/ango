@@ -54,7 +54,7 @@ func getBranch() {
 		fmt.Printf("Error getting branch: %s\n", err)
 		os.Exit(1)
 	}
-	branch := string(branchBytes)
+	branch := strings.Trim(string(branchBytes), "\n")
 
 	// check branch
 	if branch == "master" {
@@ -73,21 +73,24 @@ func getBranch() {
 		fmt.Printf("Error getting sha refspec: %s\n", err)
 		os.Exit(1)
 	}
-	versionHash = string(hashBytes)
+	versionHash = strings.Trim(string(hashBytes), "\n")
 }
 
 func runBuild() {
-	// compile build string
-	buildStr := `build`
+	// compile build args
+	buildArgs := []string{`build`}
+	if isRelease || isLatest {
+		buildArgs = append(buildArgs, `-ldflags`)
+	}
 	if isRelease {
-		buildStr += fmt.Sprintf(` -ldflags "-X main.versionNumber %s -X main.versionHash %s"`, versionNumber, versionHash)
+		buildArgs = append(buildArgs, fmt.Sprintf(`-X main.versionNumber %s -X main.versionHash %s`, versionNumber, versionHash))
 	}
 	if isLatest {
-		buildStr += fmt.Sprintf(` -ldflags "-X main.versionHash %s"`, versionHash)
+		buildArgs = append(buildArgs, fmt.Sprintf(`-X main.versionHash %s`, versionHash))
 	}
 
 	// run build
-	buildOut, err := exec.Command("go", strings.Split(buildStr, " ")...).CombinedOutput()
+	buildOut, err := exec.Command("go", buildArgs...).CombinedOutput()
 	if err != nil {
 		fmt.Printf("Error running build: %s\n%s\n", err, string(buildOut))
 		os.Exit(1)
