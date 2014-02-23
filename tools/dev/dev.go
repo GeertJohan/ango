@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 var (
@@ -177,12 +178,34 @@ func watchExampleAngo() {
 		stop(1)
 		return
 	}
+	err = watcher.WatchFlags(`templates/ango-service.tmpl.go`, fsnotify.FSN_MODIFY)
+	if err != nil {
+		fmt.Printf("Error starting watch on go template file: %s\n", err)
+		stop(1)
+		return
+	}
+	err = watcher.WatchFlags(`templates/ango-service.tmpl.js`, fsnotify.FSN_MODIFY)
+	if err != nil {
+		fmt.Printf("Error starting watch on js template file: %s\n", err)
+		stop(1)
+		return
+	}
 	for {
 		select {
 		case <-stopCh:
 			return
 		case <-watcher.Event:
+			// short timeout consuming another event becuase sublime sometimes saves (modifies) the file twice
+			select {
+			case <-time.After(100 * time.Millisecond):
+			case <-watcher.Event:
+			}
 			angoExample()
+			// short timeout consuming another event because somehow ango modifies the template files!?!?!?!?
+			select {
+			case <-time.After(100 * time.Millisecond):
+			case <-watcher.Event:
+			}
 		case err := <-watcher.Error:
 			if err != nil {
 				fmt.Printf("Error watching example ango file: %s\n", err)
