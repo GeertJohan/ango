@@ -1,5 +1,9 @@
 package parser
 
+import (
+	"strings"
+)
+
 // Service holds information about a ango service
 type Service struct {
 	// Name is the name given to the service
@@ -24,8 +28,8 @@ type Procedure struct {
 	Type   ProcedureType
 	Oneway bool
 	Name   string
-	Args   []*Param
-	Rets   []*Param
+	Args   Params
+	Rets   Params
 }
 
 // ProcedureType indicates wether a procedure is server- or client-side
@@ -36,6 +40,18 @@ var (
 	ServerProcedure = ProcedureType("string")
 	ClientProcedure = ProcedureType("client")
 )
+
+// Params is a list of parameters
+type Params []*Param
+
+// CommaSeperatedString returns a comma seperated string of arguments
+func (ps Params) CommaSeperatedString() string {
+	names := make([]string, 0, len(ps))
+	for _, p := range ps {
+		names = append(names, p.Name)
+	}
+	return strings.Join(names, ", ")
+}
 
 // Param defines an argument or return parameter
 type Param struct {

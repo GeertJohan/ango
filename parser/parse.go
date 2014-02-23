@@ -212,7 +212,7 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 	return proc, nil
 }
 
-func parseParams(text string, list *[]*Param) *ParseError {
+func parseParams(text string, list *Params) *ParseError {
 	if len(text) < 3 {
 		// fast return for no params or ()
 		return nil

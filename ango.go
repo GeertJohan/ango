@@ -19,6 +19,7 @@ var flags struct {
 }
 
 var (
+	// ErrNotImplementedYet is returned when something is not yet implemented
 	ErrNotImplementedYet = errors.New("not implemented yet")
 )
 
