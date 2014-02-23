@@ -220,7 +220,7 @@ func angoExample() {
 	stopWg.Add(1)
 	defer stopWg.Done()
 	fmt.Println("Running ango tool for example/chatService.ango")
-	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--js", "example/http-files", "--force-overwrite") // "--go", "example",
+	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--js", "example/http-files", "--go", "example", "--force-overwrite")
 	cmdAngoExample.Stdin = os.Stdin
 	cmdAngoExample.Stdout = sgr.NewColorWriter(os.Stdout, sgr.FgBlue, false)
 	cmdAngoExample.Stderr = sgr.NewColorWriter(os.Stderr, sgr.FgBlue, false)

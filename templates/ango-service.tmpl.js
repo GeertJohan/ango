@@ -1,4 +1,4 @@
-angular.module('ango-{{.Service.Name}}fdsa', [])
+angular.module('ango-{{.Service.Name}}', [])
 	.provider('{{.Service.Name}}', function() {
 
 		// static constant globals for this generated service
@@ -17,6 +17,7 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 		// exceptions
 		var expMissingArgs = "AngoException: missing arguments";
 		var expTooManyArgs = "AngoException: too many arguments";
+		var expNotAFunction = "AngoException: not a function";
 
 		//++ do event handlers for incomming calls?
 		//++ or, require provider or service to be set up with an object having functions for all handlers?
@@ -44,6 +45,14 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 		//++ when returning string, an error occurred. (in defered: reject("error message"))
 		//++ when returning object, ok, and values are object. (in defered: resolve({field: "foo"}))
 
+		// some getters
+		this.getServiceName = getServiceName =function() {
+			return serviceName;
+		};
+		this.getProtocolVersion = getProtocolVersion =function() {
+			return protocolVersion;
+		};
+
 		// settings concerning the location and path for the websocket
 		var wsUriScheme = "ws://";
 		this.setWsUriScheme = function(scheme) {
@@ -51,12 +60,34 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 		}
 		var wsUriHost = document.location.host;
 		this.setWsUriHost = function (host) {
-			wsHost = host;
+			wsUriHost = host;
 		};
 		var wsUriPath = "/websocket-ango-{{.Service.Name}}";
 		this.setWsUriPath = function(path) {
-			wsPath = path;
+			wsUriPath = path;
 		};
+
+
+		// simple events registration
+		var eventListeners = []
+		var runEvent = [];
+		function makeEvent(prov, eventName) {
+			eventListeners["on"+eventName] = [];
+			prov["listenOn"+eventName] = function(fn) {
+				if(typeof(fn) != "function") {
+					throw expNotAFunction;
+				}
+				prov["on"+eventName].push(fn);
+			}
+			runEvent["on"+eventName] = function(info) {
+				for(var fn in prov["on"+eventName]) {
+					fn(info);
+				}
+			}
+		}
+		makeEvent(this, "WsOpen");
+		makeEvent(this, "WsError");
+		makeEvent(this, "WsClose");
 
 		// debugging settings
 		var debug = false;
@@ -71,6 +102,10 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 			}
 			var service = {};
 
+			// some getters that are the same on the provider
+			service.getServiceName = getServiceName;
+			service.getProtocolVersion = getProtocolVersion;
+
 			// keep all pending requests here until they get responses
 			var callbacks = {};
 			// create a unique callback ID to map requests to responses
@@ -78,8 +113,8 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 			// queue to hold sends when socket isn't open
 			var queue = [];
 			// create our websocket object with the address to the websocket
-			var ws = new WebSocket(wsUriScheme+wsUriHost+wsPath);
-
+			var ws = new WebSocket(wsUriScheme+wsUriHost+wsUriPath);
+			// communication state for this service (as defined in enum in provider)
 			var state = stateInit;
 			
 			ws.onopen = function(){
@@ -88,9 +123,10 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 				}
 
 				// send version string
-				ws.send(protocolVersion)
+				ws.send(protocolVersion);
 
-				//++ hook open listeners
+				// run event listeners
+				runEvent.onWsOpen();
 			};
 			
 			ws.onmessage = function(message) {
@@ -130,14 +166,18 @@ angular.module('ango-{{.Service.Name}}fdsa', [])
 				if(debug) {
 					console.error("Error on websocket: ", err)
 				}
-				//++ hook error listeners
+
+				// run onError listeners
+				runEvent.onWsError(err);
 			}
 
 			ws.onclose = function() {
 				if(debug) {
 					console.error("ango websocket closed");
 				}
-				//++ hook close listeners
+
+				// run onClose listeners
+				runEvent.onWsClose();
 			}
 
 			// getCallbackID creates a new callback ID for a request

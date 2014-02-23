@@ -16,6 +16,7 @@ var flags struct {
 	InputFile      string `long:"input" short:"i" description:"Input file" required:"true"`
 	GoDir          string `long:"go" description:"Go output directory"`
 	JsDir          string `long:"js" description:"Javascript output directory"`
+	GoPackage      string `long:"go-package" description:"Package identifier for the generated code" default:"main"`
 }
 
 var (
