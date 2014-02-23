@@ -51,5 +51,7 @@ This performs the following:
 ### Download
 Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).
 
+**Note on pretty javascript: **When [js-beautify](https://github.com/einars/js-beautify) is installed, it is used to clean up the generated javascript.
+
 ### License
 This project is licensed under a Simplified BSD license. Please read the [LICENSE file](LICENSE).
