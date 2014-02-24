@@ -48,6 +48,25 @@ This performs the following:
  - Watch example source (and imported packages) and re-build on change.
  - Re-genereate example ango service when ango tool was re-build or when .ango file changes.
 
+#### Packages & directories
+The ango source is divided into seperate packages:
+ - `ango/definitions` contains types and strucutures defining a ango service. ([view godoc](http://godoc.org/github.com/GeertJohan/ango/definitions))
+ - `ango/parser` implements a simple `.ango` definition file parser.
+ - `ango` (main) is the cmd utilizing the above packages and contains the generators.
+
+These packages exist to seperate logic and make it easier to create a more advanced parser (maybe using [yacc](http://golang.org/cmd/yacc/) and [nex](https://github.com/blynn/nex)).
+
+Some other directories exist:
+ - `ango/example` contains an example using ango. ([more info](example/README.md))
+ - `ango/idea` old folder, marked for removal.
+ - `ango/notes` documentation and ideas for this project.
+ - `ango/templates` contains the templates used by the generators and are included by [go.rice](https://github.com/GeertJohan/go.rice).
+ - `ango/tools/dev` contains the dev tool described above.
+ - `ango/tools/publish` contains a tool ran by drone.io to build and preserve standalone binaries (linked in the download section below).
+
+### TODO
+There's still lots of things to do. If you wish to help out please contact me.
+
 ### Download
 Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).
 
