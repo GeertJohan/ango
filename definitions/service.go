@@ -1,4 +1,4 @@
-package parser
+package definitions
 
 import (
 	"strings"
@@ -16,7 +16,8 @@ type Service struct {
 	ClientProcedures map[string]*Procedure
 }
 
-func newService() *Service {
+// NewService creates a new service instance and sets up maps and defaults
+func NewService() *Service {
 	return &Service{
 		ServerProcedures: make(map[string]*Procedure),
 		ClientProcedures: make(map[string]*Procedure),

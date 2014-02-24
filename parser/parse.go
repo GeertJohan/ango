@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"github.com/GeertJohan/ango/definitions"
 	"io"
 	"regexp"
 	"strings"
@@ -93,10 +94,10 @@ func printParseErrorf(format string, data ...interface{}) {
 
 // Parse parses an ango definition stream and returns a *Service or an error.
 // When and error occured during the parsing of a line, it is of type *ParseError.
-func Parse(rd io.Reader) (*Service, error) {
+func Parse(rd io.Reader) (*definitions.Service, error) {
 	verbosef("do stuff with reader\n")
 
-	service := newService()
+	service := definitions.NewService()
 
 	lr := newLineReader(rd)
 
@@ -132,11 +133,11 @@ func Parse(rd io.Reader) (*Service, error) {
 			printParseErrorf(perr.Error())
 			return nil, perr
 		}
-		var procMap map[string]*Procedure
+		var procMap map[string]*definitions.Procedure
 		switch proc.Type {
-		case ClientProcedure:
+		case definitions.ClientProcedure:
 			procMap = service.ClientProcedures
-		case ServerProcedure:
+		case definitions.ServerProcedure:
 			procMap = service.ServerProcedures
 		default:
 			panic("unreachable")
@@ -168,7 +169,7 @@ func findName(line string) (string, *ParseError) {
 	return matches[1], nil
 }
 
-func findProcedure(line string) (*Procedure, *ParseError) {
+func findProcedure(line string) (*definitions.Procedure, *ParseError) {
 	matches := regexpProcedure.FindStringSubmatch(line)
 	if len(matches) == 0 {
 		return nil, &ParseError{
@@ -176,12 +177,12 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 		}
 	}
 
-	proc := &Procedure{}
+	proc := &definitions.Procedure{}
 	switch matches[1] {
 	case "server":
-		proc.Type = ServerProcedure
+		proc.Type = definitions.ServerProcedure
 	case "client":
-		proc.Type = ClientProcedure
+		proc.Type = definitions.ClientProcedure
 	default:
 		panic("unreachable")
 	}
@@ -212,7 +213,7 @@ func findProcedure(line string) (*Procedure, *ParseError) {
 	return proc, nil
 }
 
-func parseParams(text string, list *Params) *ParseError {
+func parseParams(text string, list *definitions.Params) *ParseError {
 	if len(text) < 3 {
 		// fast return for no params or ()
 		return nil
@@ -228,7 +229,7 @@ func parseParams(text string, list *Params) *ParseError {
 
 	// count and create slice for params
 	paramCount := len(paramStrings)
-	*list = make([]*Param, 0, paramCount)
+	*list = make([]*definitions.Param, 0, paramCount)
 
 	// loop over params
 	for i, paramString := range paramStrings {
@@ -255,17 +256,17 @@ func parseParams(text string, list *Params) *ParseError {
 		taken[name] = true
 
 		// create new param
-		p := &Param{
+		p := &definitions.Param{
 			Name: name,
 		}
 		// set typed param type
 		switch tipe {
 		case "int":
-			p.Type = ParamTypeInt
+			p.Type = definitions.ParamTypeInt
 		case "uint":
-			p.Type = ParamTypeUint
+			p.Type = definitions.ParamTypeUint
 		case "string":
-			p.Type = ParamTypeString
+			p.Type = definitions.ParamTypeString
 		default:
 			panic("unreachable")
 		}

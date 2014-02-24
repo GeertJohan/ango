@@ -3,7 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/GeertJohan/ango/parser"
+	"github.com/GeertJohan/ango/definitions"
 	"io"
 	// "os"
 	"sort"
@@ -30,7 +30,7 @@ func versionFull() string {
 	return "local-" + instanceUnique
 }
 
-func calculateVersion(service *parser.Service) string {
+func calculateVersion(service *definitions.Service) string {
 	hasher := sha256.New()
 
 	// wr := io.MultiWriter(hasher, os.Stdout) // debug writer
@@ -53,7 +53,7 @@ func calculateVersion(service *parser.Service) string {
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
-func calculateVersionProcedures(hasher io.Writer, procs map[string]*parser.Procedure) {
+func calculateVersionProcedures(hasher io.Writer, procs map[string]*definitions.Procedure) {
 
 	// sort keys for server procedures
 	keys := make([]string, 0, len(procs))
@@ -80,7 +80,7 @@ func calculateVersionProcedures(hasher io.Writer, procs map[string]*parser.Proce
 	}
 }
 
-func calculateVersionParams(hasher io.Writer, params []*parser.Param) {
+func calculateVersionParams(hasher io.Writer, params []*definitions.Param) {
 	for _, param := range params {
 		fmt.Fprintf(hasher, "%s %s,", param.Name, param.Type)
 	}

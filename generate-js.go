@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/GeertJohan/ango/parser"
+	"github.com/GeertJohan/ango/definitions"
 	"github.com/GeertJohan/go.ask"
 	"io"
 	"os"
@@ -12,10 +12,10 @@ import (
 
 type dataJs struct {
 	ProtocolVersion string
-	Service         *parser.Service
+	Service         *definitions.Service
 }
 
-func generateJs(service *parser.Service) error {
+func generateJs(service *definitions.Service) error {
 	var err error
 	var outputDir string
 	if filepath.IsAbs(flags.JsDir) {
