@@ -20,14 +20,31 @@ var (
 	ParamTypeString = ParamType("string")
 )
 
+// GoTypeName returns the Go TypeName (http://golang.org/ref/spec#TypeName) for the ParamType
+func (pt ParamType) GoTypeName() string {
+	return string(pt)
+}
+
 // Params is a list of parameters
 type Params []*Param
 
-// CommaSeperatedString returns a comma seperated string of arguments
-func (ps Params) CommaSeperatedString() string {
+// JsParameterList returns a comma seperated string of arguments (name only)
+func (ps Params) JsParameterList() string {
 	names := make([]string, 0, len(ps))
 	for _, p := range ps {
 		names = append(names, p.Name)
 	}
 	return strings.Join(names, ", ")
+}
+
+// GoParameterList returns the params as go ParameterList (http://golang.org/ref/spec#ParameterList)
+func (ps Params) GoParameterList() string {
+	str := ""
+	for _, param := range ps {
+		if len(str) > 0 {
+			str += ","
+		}
+		str += param.Name + " " + param.Type.GoTypeName()
+	}
+	return str
 }

@@ -334,7 +334,7 @@ angular.module('ango-{{.Service.Name}}', [])
 
 			// PROCEDURES, as defined in .ango file
 			{{range .Service.ServerProcedures}}
-			service.{{.Name}} = function( {{.Args.CommaSeperatedString}} ) {
+			service.{{.Name}} = function( {{.Args.JsParameterList}} ) {
 				if(arguments.length > {{len .Args}}) {
 					throw expTooManyArgs;
 				}

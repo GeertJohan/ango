@@ -1,5 +1,9 @@
 package definitions
 
+import (
+	"strings"
+)
+
 // Service holds information about a ango service
 type Service struct {
 	// Name is the name given to the service
@@ -18,4 +22,10 @@ func NewService() *Service {
 		ServerProcedures: make(map[string]*Procedure),
 		ClientProcedures: make(map[string]*Procedure),
 	}
+}
+
+// CapitalizedName returns the service name, capitalized.
+// Used by ango-service.tmpl.go
+func (s *Service) CapitalizedName() string {
+	return strings.ToUpper(s.Name[:1]) + s.Name[1:]
 }
