@@ -41,12 +41,13 @@ Several files describe the working of ango.
 
 [![Build Status](https://drone.io/github.com/GeertJohan/ango/status.png)](https://drone.io/github.com/GeertJohan/ango/latest)
 
+#### Devtool
 This project involves several packages. There's a simple tool to automatically run and update the workspace as you go.
 To run the tool, cd into the root folder (ango) and run: `sh tools/dev/run.sh`.
-This performs the following:
+The devtool performs the following:
  - Watch ango source (and imported packages) and re-build on change.
  - Watch example source (and imported packages) and re-build on change.
- - Re-genereate example ango service when ango tool was re-build or when .ango file changes.
+ - Re-generate example ango service when ango tool was re-build or when .ango file changes.
 
 #### Packages & directories
 The ango source is divided into seperate packages:
@@ -65,7 +66,7 @@ Some other directories exist:
  - `ango/tools/publish` contains a tool ran by drone.io to build and preserve standalone binaries (linked in the download section below).
 
 ### TODO
-There's still lots of things to do. If you wish to help out please contact me.
+There's still lots of things to do. If you wish to help out, please contact me.
 
 ### Download
 Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).
