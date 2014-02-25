@@ -12,4 +12,5 @@ chat.controller('mainCtrl', function($scope, chatService) {
 	$scope.foo = "bar";
 	console.log(chatService.getServiceName());
 	console.log(chatService.getProtocolVersion());
+	chatService.notify("bla");
 });

@@ -23,6 +23,10 @@ func NewChatServiceSession() ChatServiceSessionInterface {
 	}
 }
 
+func (cs *ChatServiceSession) Stop(err error) {
+	fmt.Printf("Stopping session %d with error: %s\n", cs.id, err)
+}
+
 func (cs *ChatServiceSession) Add(a int, b int) (c int, err error) {
 	return a + b, nil
 }
@@ -33,6 +37,9 @@ func (cs *ChatServiceSession) Notify(text string) {
 
 var server = &ChatServiceServer{
 	NewSession: NewChatServiceSession,
+	ErrorIncommingConnection: func(err error) {
+		fmt.Printf("Error setting up connection: %s\n", err)
+	},
 }
 
 func main() {
@@ -43,7 +50,7 @@ func main() {
 	}
 
 	http.Handle("/", http.FileServer(httpFiles.HTTPBox()))
-	http.Handle("/ango-websocket-chatService", server)
+	http.Handle("/websocket-ango-chatService", server)
 
 	err = http.ListenAndServe(":8123", nil)
 	if err != nil {

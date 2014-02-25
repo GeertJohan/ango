@@ -242,15 +242,13 @@ angular.module('ango-{{.Service.Name}}', [])
 				var request = {
 					type: "req",
 					procedure: name,
+					data: data,
 				}
 
 				// create deferred to return
 				var deferred = $q.defer();
 
 				if(!oneway) {
-					// only send data on not-oneway requests
-					request.data = data;
-
 					// setup callback to resolve deferred
 					var callbackID = getCallbackID();
 					callbacks[callbackID] = {
@@ -258,6 +256,9 @@ angular.module('ango-{{.Service.Name}}', [])
 						deferred: deferred,
 					};
 					request.cb_id = callbackID;
+					if(debug) {
+						console.log('callback id: '+callbackID);
+					}
 				}
 
 				if(debug) {
@@ -266,6 +267,9 @@ angular.module('ango-{{.Service.Name}}', [])
 
 				var requestJson = JSON.stringify(request);
 				if(ws.readyState == 1 && state == stateRunning && queue.length == 0) {
+					if(debug) {
+						console.log('writing request to ws');
+					}
 					// directly send when ws is live and queue was completely sent
 					ws.send(requestJson);
 
@@ -274,6 +278,9 @@ angular.module('ango-{{.Service.Name}}', [])
 						deferred.resolve({});
 					}
 				} else {
+					if(debug) {
+						console.log('writing request to queue');
+					}
 					// ws is not ready or queue is not completely sent yet.
 					// therefore, add item to queue
 					queueItem = {
@@ -289,7 +296,7 @@ angular.module('ango-{{.Service.Name}}', [])
 					queue.push(queueItem);
 				}
 
-				return defer.promise;
+				return deferred.promise;
 			}
 
 			function handleMessage(messageObj) {

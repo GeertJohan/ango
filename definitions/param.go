@@ -10,6 +10,11 @@ type Param struct {
 	Type ParamType
 }
 
+// CapitalizedName returns the name for this param, capitalized
+func (p *Param) CapitalizedName() string {
+	return strings.ToUpper(p.Name[:1]) + p.Name[1:]
+}
+
 // ParamType is the type of a parameter
 type ParamType string
 
