@@ -117,6 +117,18 @@ func watchGeneratedSource() {
 	stopWg.Add(1)
 	defer stopWg.Done()
 
+	haveLine := make(chan bool)
+	go func() {
+		// clear stdin and read line when required
+		for {
+			fmt.Scanln()
+			select {
+			case haveLine <- true:
+			default:
+			}
+		}
+	}()
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		fmt.Printf("Error starting watcher: %s\n", err)
@@ -149,7 +161,7 @@ func watchGeneratedSource() {
 			if time.Now().Sub(timeLastGenCodeOverwrite) > time.Duration(3*time.Second) {
 				genLock.Lock()
 				sgr.Println("[fg-red]Detected modification on generated source. Hit enter to continue devtool (will overwrite changes!).")
-				fmt.Scanln()
+				<-haveLine
 				timeLastGenCodeOverwrite = time.Now()
 				genLock.Unlock()
 			}
@@ -258,11 +270,15 @@ func watchExampleAngo() {
 		case <-stopCh:
 			return
 		case <-watcher.Event:
-			// short timeout consuming another event becuase sublime sometimes saves (modifies) the file twice
-			select {
-			case <-time.After(100 * time.Millisecond):
-			case <-watcher.Event:
+			// short timeout consuming other events becuase sublime sometimes saves (modifies) the file twice
+			for {
+				select {
+				case <-time.After(100 * time.Millisecond):
+					goto ango
+				case <-watcher.Event:
+				}
 			}
+		ango:
 			angoExample()
 			// short timeout consuming another event because somehow ango modifies the template files!?!?!?!?
 			select {
