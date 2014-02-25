@@ -50,7 +50,7 @@ This performs the following:
 
 #### Packages & directories
 The ango source is divided into seperate packages:
- - `ango/definitions` contains types and strucutures defining a ango service. ([view godoc](http://godoc.org/github.com/GeertJohan/ango/definitions))
+ - `ango/definitions` contains types and strucutures defining an ango service. ([view godoc](http://godoc.org/github.com/GeertJohan/ango/definitions))
  - `ango/parser` implements a simple `.ango` definition file parser. The package provides functions and methods that are to be used directly by the generator and/or templates.
  - `ango` (main) is the cmd utilizing the above packages and contains the generators.
 
