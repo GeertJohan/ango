@@ -77,7 +77,7 @@ angular.module('ango-{{.Service.Name}}', [])
 				if(typeof(fn) != "function") {
 					throw expNotAFunction;
 				}
-				prov["on"+eventName].push(fn);
+				eventListeners["on"+eventName].push(fn);
 			}
 			runEvent["on"+eventName] = function(info) {
 				for(var fn in prov["on"+eventName]) {
