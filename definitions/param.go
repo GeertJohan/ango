@@ -33,14 +33,14 @@ func (pt ParamType) GoTypeName() string {
 // Params is a list of parameters
 type Params []*Param
 
-// JsParameterList returns a comma seperated string of arguments (name only)
-func (ps Params) JsParameterList() string {
-	names := make([]string, 0, len(ps))
-	for _, p := range ps {
-		names = append(names, p.Name)
-	}
-	return strings.Join(names, ", ")
-}
+// // JsParameterList returns a comma seperated string of arguments (name only)
+// func (ps Params) JsParameterList() string {
+// 	names := make([]string, 0, len(ps))
+// 	for _, p := range ps {
+// 		names = append(names, p.Name)
+// 	}
+// 	return strings.Join(names, ", ")
+// }
 
 // GoParameterList returns the params as go ParameterList (http://golang.org/ref/spec#ParameterList)
 func (ps Params) GoParameterList() string {

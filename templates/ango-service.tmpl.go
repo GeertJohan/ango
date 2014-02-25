@@ -54,7 +54,8 @@ type {{.Service.CapitalizedName}}SessionInterface interface {
 
 	{{range .Service.ServerProcedures}}
 		// {{.CapitalizedName}} is a ango procedure defined in the .ango file
-		{{.CapitalizedName}} ( {{.GoArgs}} )( {{.GoRets}} )
+		{{/* {{.CapitalizedName}} ( {{range $i, $arg := .Args}} {{if $i}},{{end}} {{$arg.Name}} {{$arg.Type.GoTypeName}} {{end}} )( {{range $i, $ret := .Rets}} {{if $i}},{{end}} {{$ret.Name}} {{$ret.Type.GoTypeName}} {{end}} {{if not .Oneway}} {{if .Rets}},{{end}} err error {{end}}) */}}
+		{{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} )
 	{{end}}
 }
 
