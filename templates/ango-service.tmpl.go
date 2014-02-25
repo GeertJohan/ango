@@ -3,7 +3,8 @@ package {{.PackageName}}
 import (
 	"errors"
 	"fmt"
-	"github.com/GeertJohan/websocket"
+	"github.com/GeertJohan/go.wstext"
+	"github.com/gorilla/websocket"
 	"encoding/json"
 	"net/http"
 )
@@ -84,7 +85,10 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 		return
 	}
 
-	receivedVersion, err := conn.ReadText()
+	// wrap for simple text read/write
+	textconn := wstext.Conn{conn}
+
+	receivedVersion, err := textconn.ReadText()
 	if err != nil {
 		if server.ErrorIncommingConnection != nil {
 			server.ErrorIncommingConnection(err)
@@ -92,7 +96,7 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 		return
 	}
 	if receivedVersion != protocolVersion {
-		_ = conn.WriteText("invalid")
+		_ = textconn.WriteText("invalid")
 		fmt.Printf("err: %s\n", err)
 		fmt.Printf("in: '%s'\n", receivedVersion)
 		fmt.Printf("hv: '%s'\n", protocolVersion)
@@ -101,7 +105,7 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 		}
 		return
 	}
-	err = conn.WriteText("good")
+	err = textconn.WriteText("good")
 	if err != nil {
 		if server.ErrorIncommingConnection != nil {
 			server.ErrorIncommingConnection(err)
