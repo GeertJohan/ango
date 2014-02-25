@@ -23,8 +23,11 @@ var (
 
 	monAngo *exec.Cmd // command builds ango on file change (uses gomon)
 
-	// watcher on the ango binary
-	watcher *fsnotify.Watcher
+	// last ango generation
+	timeLastGenCodeOverwrite time.Time
+
+	// genLock is write-locked when generated source was detected modified unexpectedly
+	genLock sync.RWMutex
 
 	// closed on stop
 	stopCh = make(chan bool)
@@ -73,10 +76,16 @@ func main() {
 		select {}
 	}
 
+	// watch generated source and lock on modification
+	go watchGeneratedSource()
+
+	// watch and rebuild/restart example cmd
 	go rerunExample()
 
-	go rerunAngo()
+	// watch and rebuild ango tool
+	go rebuildAngo()
 
+	// watch ango tool and templates and re-generate on change
 	go watchExampleAngo()
 
 	sigChan := make(chan os.Signal)
@@ -104,6 +113,60 @@ func stop(exitCode int) {
 	}()
 }
 
+func watchGeneratedSource() {
+	stopWg.Add(1)
+	defer stopWg.Done()
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Printf("Error starting watcher: %s\n", err)
+		stop(1)
+		return
+	}
+	defer watcher.Close()
+	err = watcher.WatchFlags(`example/ango-chatService.gen.go`, fsnotify.FSN_MODIFY)
+	if err != nil {
+		fmt.Printf("Error starting watch on go generated file: %s\n", err)
+		stop(1)
+		return
+	}
+	err = watcher.WatchFlags(`example/http-files/ango-chatService.gen.js`, fsnotify.FSN_MODIFY)
+	if err != nil {
+		fmt.Printf("Error starting watch on js generated file: %s\n", err)
+		stop(1)
+		return
+	}
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-watcher.Event:
+			// short timeout consuming another event becuase sublime sometimes saves (modifies) the file twice
+			select {
+			case <-time.After(100 * time.Millisecond):
+			case <-watcher.Event:
+			}
+			if time.Now().Sub(timeLastGenCodeOverwrite) > time.Duration(3*time.Second) {
+				genLock.Lock()
+				sgr.Println("[fg-red]Detected modification on generated source. Hit enter to continue devtool (will overwrite changes!).")
+				fmt.Scanln()
+				timeLastGenCodeOverwrite = time.Now()
+				genLock.Unlock()
+			}
+			select {
+			case <-time.After(100 * time.Millisecond):
+			case <-watcher.Event:
+			}
+		case err := <-watcher.Error:
+			if err != nil {
+				fmt.Printf("Error watching example ango file: %s\n", err)
+				stop(1)
+				return
+			}
+		}
+	}
+}
+
 func rerunExample() {
 	stopWg.Add(1)
 	defer stopWg.Done()
@@ -129,7 +192,7 @@ func rerunExample() {
 	}
 }
 
-func rerunAngo() {
+func rebuildAngo() {
 	stopWg.Add(1)
 	defer stopWg.Done()
 
@@ -219,6 +282,9 @@ func watchExampleAngo() {
 func angoExample() {
 	stopWg.Add(1)
 	defer stopWg.Done()
+	genLock.RLock()
+	defer genLock.RUnlock()
+	timeLastGenCodeOverwrite = time.Now()
 	fmt.Println("Running ango tool for example/chatService.ango")
 	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--js", "example/http-files", "--go", "example", "--force-overwrite")
 	cmdAngoExample.Stdin = os.Stdin
