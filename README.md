@@ -36,6 +36,7 @@ Several files describe the working of ango.
  - read [ango-definitions.md](notes/ango-definitions.md) about the .ango definition statements
  - read [types.md](notes/types.md) about the available types with ango procedures
  - read [protocol.md](notes/protocol.md) about the websockets/json protocol
+ - read [thoughts.md](notes/thoughts.md) for idea's and upcomming features.
 
 ### Development
 
