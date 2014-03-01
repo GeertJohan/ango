@@ -69,7 +69,7 @@ Some other directories exist:
 There's still lots of things to do. If you wish to help out, please contact me.
 
 ### Download
-Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).
+At this time, automated builds are only available for linux_amd64. Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).
 
 **Note on pretty javascript:** When [js-beautify](https://github.com/einars/js-beautify) is installed, it is used to clean up the generated javascript.
 
