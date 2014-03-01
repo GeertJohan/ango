@@ -23,7 +23,7 @@ Therefore I chose to create a tool that generates Go and Angular/javascript, so 
 Code generated for Go can be copied into any go package. The code doesn't form a package itself.
 NEEDS THINKING: this has drawbacks on the generated code (need to use scope to hide inner variables from the rest of package).
 
-For angular a single `.js` file is generated  holding an angular module. The module can be included by any other angular module.
+For the client side a single `.js` file is generated  holding an angular module. The module can be included by any other angular module.
 
 ### Terminology
 A **service** exists of one or more **procedures** server- and/or client-side.

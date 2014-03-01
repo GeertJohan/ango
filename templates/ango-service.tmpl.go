@@ -65,7 +65,6 @@ type {{.Service.CapitalizedName}}SessionInterface interface {
 
 	{{range .Service.ServerProcedures}}
 		// {{.CapitalizedName}} is a ango procedure defined in the .ango file
-		{{/* {{.CapitalizedName}} ( {{range $i, $arg := .Args}} {{if $i}},{{end}} {{$arg.Name}} {{$arg.GoTypeName}} {{end}} )( {{range $i, $ret := .Rets}} {{if $i}},{{end}} {{$ret.Name}} {{$ret.GoTypeName}} {{end}} {{if not .Oneway}} {{if .Rets}},{{end}} err error {{end}}) */}}
 		{{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} )
 	{{end}}
 }
@@ -78,10 +77,6 @@ type {{.Service.CapitalizedName}}Server struct {
 	NewSession               New{{.Service.CapitalizedName}}SessionInterface //++ inline type?
 	ErrorIncommingConnection func(err error)
 }
-
-//++ TODO: what to do with errors?
-//++ add fields to Server? ErrorIncommingConnection(err error)
-//++ when error occurs and non-nil: call the function with the error
 
 // ServeHTTP hijacks incomming http connections and sets up the websocket communication
 func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
