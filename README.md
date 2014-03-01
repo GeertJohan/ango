@@ -45,9 +45,9 @@ Several files describe the working of ango.
 This project involves several packages. There's a simple tool to automatically run and update the workspace as you go.
 To run the tool, cd into the root folder (ango) and run: `sh tools/dev/run.sh`.
 The devtool performs the following:
- - Watch ango source (and imported packages) and re-build on change.
+ - Watch ango cmd source (and imported packages) and re-build ango cmd on change.
  - Watch example source (and imported packages) and re-build on change.
- - Re-generate example ango service when ango tool was re-build or when .ango file changes.
+ - Re-generate example ango service when ango tool was re-build or when .ango file changes or when a template changes.
 
 #### Packages & directories
 The ango source is divided into seperate packages:
