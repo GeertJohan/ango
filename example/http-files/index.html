@@ -3,11 +3,23 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Ango example</title>
+		<style>
+			.calc>input{
+				width: 30px;
+			}
+		</style>
 	</head>
 	<body ng-controller="mainCtrl" >
 
 		<div>{{foo}}</div>
-		<div>{{answer}}</div>
+
+		<div class="calc" >
+			<input type="text" ng-model="calc.a" />
+			<span>+</span>
+			<input type="text" ng-model="calc.b" />
+			<button ng-click="calc.add()" >=</button>
+			<span>{{calc.c}}</span>
+		</div>
 
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.min.js" ></script>
 		<script src="ango-chatService.gen.js" ></script>

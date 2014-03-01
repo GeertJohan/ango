@@ -16,14 +16,22 @@ chat.config(function(chatServiceProvider) {
 chat.controller('mainCtrl', function($scope, chatService) {
 	console.log(chatService.getServiceName());
 	console.log(chatService.getProtocolVersion());
+
 	chatService.notify("hello ango server");
-	var prom = chatService.add(1, 2);
-	prom.then(function(rets) {
-		console.dir(rets);
-		$scope.answer = rets.c;
-	}, function(err) {
-		console.error(err);
-	});
+
+	$scope.calc = {
+		a: 1,
+		b: 2,
+		add: function() {
+			console.log('do add');
+			chatService.add($scope.calc.a, $scope.calc.b).then(
+				function(retval) {
+					$scope.calc.c = retval.c;
+				}, function(err) {
+					console.error(err);
+				});
+		}
+	};
 
 	$scope.foo = "controller is working";
 });
