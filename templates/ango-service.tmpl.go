@@ -33,18 +33,29 @@ type angoInMsg struct {
 
 // root structure for outgoing message json
 type angoOutMsg struct {
-	Type       string      `json:"type"`      // "req" or "res"
-	Procedure  string      `json:"procedure"` // name for the procedure 9when "req"
-	CallbackID uint64      `json:"cb_id"`     // callback ID for request or response
-	Data       interface{} `json:"data"`      // remain raw, depends on procedure
-	Error      interface{} `json:"error"`     // remain raw, depens on ??
+	Type       string        `json:"type"`                // "req" or "res"
+	Procedure  string        `json:"procedure,omitempty"` // name for the procedure 9when "req"
+	CallbackID uint64        `json:"cb_id"`               // callback ID for request or response
+	Data       interface{}   `json:"data"`                // remain raw, depends on procedure
+	Error      *angoOutError `json:"error,omitempty"`     // when not-nil, an error ocurred
+}
+
+type angoOutError struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
 }
 
 {{range .Service.ServerProcedures}}
-type angoInData{{.CapitalizedName}} struct {
+type angoArgsData{{.CapitalizedName}} struct {
 	{{range .Args}}
-		{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
+		{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 }
+{{if not .Oneway}}
+type angoRetsData{{.CapitalizedName}} struct {
+	{{range .Rets}}
+		{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+}
+{{end}}
 {{end}}
 
 // {{.Service.CapitalizedName}}SessionInterface types all methods that can be called by the client
@@ -54,7 +65,7 @@ type {{.Service.CapitalizedName}}SessionInterface interface {
 
 	{{range .Service.ServerProcedures}}
 		// {{.CapitalizedName}} is a ango procedure defined in the .ango file
-		{{/* {{.CapitalizedName}} ( {{range $i, $arg := .Args}} {{if $i}},{{end}} {{$arg.Name}} {{$arg.Type.GoTypeName}} {{end}} )( {{range $i, $ret := .Rets}} {{if $i}},{{end}} {{$ret.Name}} {{$ret.Type.GoTypeName}} {{end}} {{if not .Oneway}} {{if .Rets}},{{end}} err error {{end}}) */}}
+		{{/* {{.CapitalizedName}} ( {{range $i, $arg := .Args}} {{if $i}},{{end}} {{$arg.Name}} {{$arg.GoTypeName}} {{end}} )( {{range $i, $ret := .Rets}} {{if $i}},{{end}} {{$ret.Name}} {{$ret.GoTypeName}} {{end}} {{if not .Oneway}} {{if .Rets}},{{end}} err error {{end}}) */}}
 		{{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} )
 	{{end}}
 }
@@ -138,12 +149,38 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 			switch inMsg.Procedure {
 			{{range .Service.ServerProcedures}}
 				case "{{.Name}}":
-					procArgs := &angoInData{{.CapitalizedName}}{}
+					procArgs := &angoArgsData{{.CapitalizedName}}{} {{/* var procArgs is referenced by .GoCallArgs */}}
 					err = json.Unmarshal(inMsg.Data, procArgs)
 					if err != nil {
 						return err
 					}
-					session.{{.CapitalizedName}}( {{range $i, $arg := .Args}} {{if $i}},{{end}} procArgs.{{$arg.CapitalizedName}} {{end}} )
+					{{if not .Oneway}}
+					procRets := &angoRetsData{{.CapitalizedName}}{} {{/* var procRets is referenced by .GoCallRets */}}
+					var procErr error {{/* var procErr is referenced by .GoCallRets */}}
+					{{.GoCallRets}} = {{end}} session.{{.CapitalizedName}}( {{.GoCallArgs}} )
+
+					{{if not .Oneway}}
+					outMsg := &angoOutMsg{
+						Type:       "res",
+						CallbackID: inMsg.CallbackID,
+					}
+					if procErr != nil {
+						outMsg.Error = &angoOutError{
+							Type: "errorReturned",
+							Message: procErr.Error(),
+						}
+						err = conn.WriteJSON(outMsg)
+						if err != nil {
+							return err
+						}
+						break
+					}
+					outMsg.Data = procRets
+					err = conn.WriteJSON(outMsg)
+					if err != nil {
+						return err
+					}
+					{{end}}
 			{{end}}
 			default:
 				return ErrUnkonwnProcedure

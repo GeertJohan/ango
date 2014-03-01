@@ -28,21 +28,59 @@ func (p *Procedure) CapitalizedName() string {
 	return strings.ToUpper(p.Name[:1]) + p.Name[1:]
 }
 
-// GoArgs returns the go arguments
+// JsArgs returns the js arguments
+// Used by ango-service.tmpl.js
+func (p *Procedure) JsArgs() string {
+	return p.Args.JsParameterList()
+}
+
+// GoArgs returns the go function definition argument ParameterList
 // Used by ango-service.tmpl.go
 func (p *Procedure) GoArgs() string {
 	return p.Args.GoParameterList()
 }
 
-// GoRets returns the go return values
+// GoRets returns the go function definition return ParameterList
 // Used by ango-service.tmpl.go
 func (p *Procedure) GoRets() string {
 	retStr := p.Rets.GoParameterList()
 	if !p.Oneway {
 		if len(retStr) > 0 {
-			retStr += ","
+			retStr += ", "
 		}
 		retStr += "err error"
 	}
 	return retStr
+}
+
+// GoCallArgs returns the procedure call argument values
+// Used by ango-service.tmpl.go
+func (p *Procedure) GoCallArgs() string {
+	str := ""
+	for _, param := range p.Args {
+		if len(str) > 0 {
+			str += ", "
+		}
+		str += "procArgs." + param.CapitalizedName()
+	}
+	return str
+}
+
+// GoCallRets returns the procedure call return values
+// Used by ango-service.tmpl.go
+func (p *Procedure) GoCallRets() string {
+	str := ""
+	for _, param := range p.Rets {
+		if len(str) > 0 {
+			str += ", "
+		}
+		str += "procRets." + param.CapitalizedName()
+	}
+	if !p.Oneway {
+		if len(str) > 0 {
+			str += ","
+		}
+		str += "procErr"
+	}
+	return str
 }

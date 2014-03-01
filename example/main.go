@@ -28,7 +28,9 @@ func (cs *ChatServiceSession) Stop(err error) {
 }
 
 func (cs *ChatServiceSession) Add(a int, b int) (c int, err error) {
-	return a + b, nil
+	c = a + b
+	fmt.Printf("Call to Add(%d, %d) will return %d\n", a, b, c)
+	return c, nil
 }
 
 func (cs *ChatServiceSession) Notify(text string) {

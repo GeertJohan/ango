@@ -18,6 +18,13 @@ angular.module('ango-{{.Service.Name}}', [])
 		var expMissingArgs = "AngoException: missing arguments";
 		var expTooManyArgs = "AngoException: too many arguments";
 		var expNotAFunction = "AngoException: not a function";
+		var expWrongTypeArg = "AngoException: argument has wrong type";
+
+		function AngoException(message) {
+			this.name = "AngoException";
+			this.message = message;
+		}
+		AngoException.prototype = new Error;
 
 		//++ do event handlers for incomming calls?
 		//++ or, require provider or service to be set up with an object having functions for all handlers?
@@ -75,12 +82,12 @@ angular.module('ango-{{.Service.Name}}', [])
 			eventListeners["on"+eventName] = [];
 			prov["listenOn"+eventName] = function(fn) {
 				if(typeof(fn) != "function") {
-					throw expNotAFunction;
+					throw new Error(expNotAFunction);
 				}
 				eventListeners["on"+eventName].push(fn);
 			}
 			runEvent["on"+eventName] = function(info) {
-				for(var fn in prov["on"+eventName]) {
+				for(var fn; fn = eventListeners["on"+eventName].shift(); typeof(fn) == 'function') {
 					fn(info);
 				}
 			}
@@ -108,10 +115,12 @@ angular.module('ango-{{.Service.Name}}', [])
 
 			// keep all pending requests here until they get responses
 			var callbacks = {};
+			window.callbacks = callbacks;
 			// create a unique callback ID to map requests to responses
 			var currentCallbackID = 0;
 			// queue to hold sends when socket isn't open
 			var queue = [];
+			window.queue = queue;
 			// create our websocket object with the address to the websocket
 			var ws = new WebSocket(wsUriScheme+wsUriHost+wsUriPath);
 			// communication state for this service (as defined in enum in provider)
@@ -178,6 +187,7 @@ angular.module('ango-{{.Service.Name}}', [])
 
 				// run onClose listeners
 				runEvent.onWsClose();
+				console.log('done');
 			}
 
 			// getCallbackID creates a new callback ID for a request
@@ -192,17 +202,16 @@ angular.module('ango-{{.Service.Name}}', [])
 					if(debug) {
 						console.log("Going to send "+queue.length+" items from queue.");
 					}
-					for(var i = 0; i < queue.length; i++) {
+					for(var item = {}; item = queue.shift(); typeof(item) != undefined) {
 						// send request
-						ws.send(queue[i].requestJson);
+						ws.send(item.requestJson);
 
-						if(queue[i].hasOwnProperty('oneway_deferred')) {
+						if(item.hasOwnProperty('oneway_deferred')) {
 							// is aparently a oneway request
 							// resolve the deferred
-							queue[i].oneway_deferred.resolve({});
+							item.oneway_deferred.resolve({});
 						}
 					}
-					queue = [];
 				}
 			}
 
@@ -317,13 +326,20 @@ angular.module('ango-{{.Service.Name}}', [])
 
 			// handleResolveMessage resolves an outgoing request
 			function handleResolveMessage(messageObj) {
+				if(typeof(messageObj.cb_id) != 'number') {
+					throw new AngoException(expProtocolError);
+				}
 				// if an object exists with cb_id in our callbacks object, resolve the deferred
 				if(callbacks.hasOwnProperty(messageObj.cb_id)) {
 					//++ TODO: is this $rootScope.$apply proper way to do it?
-					if(typeof(messageObj.error) == "object") {
-						$rootScope.$apply(callbacks[messageObj.cb_id].deferred.reject(messageObj.error));
+					if(typeof(messageObj.error) == "object" && messageObj.error != null) {
+						//++ TODO: is $rootScope.$apply(..) required?
+						// $rootScope.$apply(callbacks[messageObj.cb_id].deferred.reject(messageObj.error));
+						callbacks[messageObj.cb_id].deferred.reject(messageObj.error);
 					} else {
-						$rootScope.$apply(callbacks[messageObj.cb_id].deferred.resolve(messageObj.data));
+						//++ TODO: is $rootScope.$apply(..) required?
+						// $rootScope.$apply(callbacks[messageObj.cb_id].deferred.resolve(messageObj.data));
+						callbacks[messageObj.cb_id].deferred.resolve(messageObj.data);
 					}
 
 					delete callbacks[messageObj.cb_id];
@@ -341,14 +357,18 @@ angular.module('ango-{{.Service.Name}}', [])
 
 			// PROCEDURES, as defined in .ango file
 			{{range .Service.ServerProcedures}}
-			service.{{.Name}} = function( {{range $i, $arg := .Args}} {{if $i}},{{end}} {{$arg.Name}} {{end}} ) {
+			service.{{.Name}} = function( {{.JsArgs}} ) {
 				if(arguments.length > {{len .Args}}) {
-					throw expTooManyArgs;
+					throw new AngoException(expTooManyArgs);
 				}
 				if(arguments.length < {{len .Args}}) {
-					throw expMissingArgs;
+					throw new AngoException(expMissingArgs);
 				}
-				//++ arguments type checking
+				{{range .Args}}
+				if(typeof({{.Name}}) != '{{.JsTypeName}}'){
+					throw new AngoException(expWrongTypeArg);
+				}
+				{{end}}
 				var data = {
 					{{range .Args}} "{{.Name}}": {{.Name}}, {{end}}
 				};
