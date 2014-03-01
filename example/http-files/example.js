@@ -24,7 +24,7 @@ chat.controller('mainCtrl', function($scope, chatService) {
 		b: 2,
 		add: function() {
 			console.log('do add');
-			chatService.add($scope.calc.a, $scope.calc.b).then(
+			chatService.add(parseInt($scope.calc.a), parseInt($scope.calc.b)).then(
 				function(retval) {
 					$scope.calc.c = retval.c;
 				}, function(err) {
