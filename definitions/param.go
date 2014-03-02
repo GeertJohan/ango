@@ -1,6 +1,8 @@
 package definitions
 
 import (
+	"errors"
+	"math"
 	"strings"
 )
 
@@ -53,6 +55,67 @@ func (p Param) JsTypeName() string {
 		return "number"
 	default:
 		panic("unknown ParamType value")
+	}
+}
+
+// IsNumber returns true when the type is numeric
+func (p Param) IsNumber() bool {
+	switch p.Type {
+	case ParamTypeInt8, ParamTypeInt16, ParamTypeInt32, ParamTypeInt64, ParamTypeInt,
+		ParamTypeUint8, ParamTypeUint16, ParamTypeUint32, ParamTypeUint64, ParamTypeUint:
+		return true
+	default:
+		return false
+	}
+}
+
+// NumberMax returns the max number constant for the given type.
+// Or an error when the type is not a number
+func (p Param) NumberMax() (uint64, error) {
+	switch p.Type {
+	case ParamTypeInt8:
+		return math.MaxInt8, nil
+	case ParamTypeInt16:
+		return math.MaxInt16, nil
+	case ParamTypeInt32:
+		return math.MaxInt32, nil
+	case ParamTypeInt64, ParamTypeInt:
+		return math.MaxInt64, nil
+	case ParamTypeUint8:
+		return math.MaxUint8, nil
+	case ParamTypeUint16:
+		return math.MaxUint16, nil
+	case ParamTypeUint32:
+		return math.MaxUint32, nil
+	case ParamTypeUint64, ParamTypeUint:
+		return math.MaxUint64, nil
+	default:
+		return 0, errors.New("not a number")
+	}
+}
+
+// NumberMax returns the max number constant for the given type.
+// Or an error when the type is not a number
+func (p Param) NumberMin() (int64, error) {
+	switch p.Type {
+	case ParamTypeInt8:
+		return math.MinInt8, nil
+	case ParamTypeInt16:
+		return math.MinInt16, nil
+	case ParamTypeInt32:
+		return math.MinInt32, nil
+	case ParamTypeInt64, ParamTypeInt:
+		return math.MinInt64, nil
+	case ParamTypeUint8:
+		return 0, nil
+	case ParamTypeUint16:
+		return 0, nil
+	case ParamTypeUint32:
+		return 0, nil
+	case ParamTypeUint64, ParamTypeUint:
+		return 0, nil
+	default:
+		return 0, errors.New("not a number")
 	}
 }
 

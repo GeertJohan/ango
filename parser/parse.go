@@ -21,7 +21,8 @@ func init() {
 	var (
 		// partials
 		rIdentifier     = `[a-z][a-zA-Z0-9]*`
-		rTypes          = `(?:int|uint|string)`
+		rBits           = `(?:8|16|32|64)`
+		rTypes          = `(?:int` + rBits + `?|uint` + rBits + `?|string)`
 		rMustWhitespace = `[ \t]+`
 		rOptWhitepsace  = `[ \t]*`
 
@@ -263,8 +264,24 @@ func parseParams(text string, list *definitions.Params) *ParseError {
 		switch tipe {
 		case "int":
 			p.Type = definitions.ParamTypeInt
+		case "int8":
+			p.Type = definitions.ParamTypeInt8
+		case "int16":
+			p.Type = definitions.ParamTypeInt16
+		case "int32":
+			p.Type = definitions.ParamTypeInt32
+		case "int64":
+			p.Type = definitions.ParamTypeInt64
 		case "uint":
 			p.Type = definitions.ParamTypeUint
+		case "uint8":
+			p.Type = definitions.ParamTypeUint8
+		case "uint16":
+			p.Type = definitions.ParamTypeUint16
+		case "uint32":
+			p.Type = definitions.ParamTypeUint32
+		case "uint64":
+			p.Type = definitions.ParamTypeUint64
 		case "string":
 			p.Type = definitions.ParamTypeString
 		default:

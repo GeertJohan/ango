@@ -19,6 +19,14 @@ chat.controller('mainCtrl', function($scope, chatService) {
 
 	chatService.notify("hello ango server");
 
+	chatService.add8(100, 100).then(
+		function(rets){
+			console.log(rets.c);
+		},
+		function(err) {
+			console.error(err);
+		});
+
 	$scope.calc = {
 		a: 1,
 		b: 2,

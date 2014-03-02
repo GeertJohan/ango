@@ -35,8 +35,8 @@ type angoInMsg struct {
 type angoOutMsg struct {
 	Type       string        `json:"type"`                // "req" or "res"
 	Procedure  string        `json:"procedure,omitempty"` // name for the procedure 9when "req"
-	CallbackID uint64        `json:"cb_id"`               // callback ID for request or response
-	Data       interface{}   `json:"data"`                // remain raw, depends on procedure
+	CallbackID uint64        `json:"cb_id,omitempty"`     // callback ID for request or response
+	Data       interface{}   `json:"data,omitempty"`      // remain raw, depends on procedure
 	Error      *angoOutError `json:"error,omitempty"`     // when not-nil, an error ocurred
 }
 

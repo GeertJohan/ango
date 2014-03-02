@@ -19,6 +19,7 @@ angular.module('ango-{{.Service.Name}}', [])
 		var expTooManyArgs = "AngoException: too many arguments";
 		var expNotAFunction = "AngoException: not a function";
 		var expWrongTypeArg = "AngoException: argument has wrong type";
+		var expNumberOutOfRange = "AngoException: argument (number) is out of valid range";
 
 		function AngoException(message) {
 			this.name = "AngoException";
@@ -365,9 +366,17 @@ angular.module('ango-{{.Service.Name}}', [])
 					throw new AngoException(expMissingArgs);
 				}
 				{{range .Args}}
-				if(typeof({{.Name}}) != '{{.JsTypeName}}'){
-					throw new AngoException(expWrongTypeArg);
-				}
+					if(typeof({{.Name}}) != '{{.JsTypeName}}'){
+						throw new AngoException(expWrongTypeArg);
+					}
+					{{if .IsNumber}}
+						if({{.Name}} > {{.NumberMax}}) {
+							throw new AngoException(expNumberOutOfRange);
+						}
+						if({{.Name}} < {{.NumberMin}}) {
+							throw new AngoException(expNumberOutOfRange);
+						}
+					{{end}}
 				{{end}}
 				var data = {
 					{{range .Args}} "{{.Name}}": {{.Name}}, {{end}}

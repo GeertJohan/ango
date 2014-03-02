@@ -33,6 +33,12 @@ func (cs *ChatServiceSession) Add(a int, b int) (c int, err error) {
 	return c, nil
 }
 
+func (cs *ChatServiceSession) Add8(a int8, b int8) (c int16, err error) {
+	c = int16(a) + int16(b)
+	fmt.Printf("Call to Add8(%d, %d) will return %d\n", a, b, c)
+	return c, nil
+}
+
 func (cs *ChatServiceSession) Notify(text string) {
 	fmt.Printf("instance %d have notification: %s\n", cs.id, text)
 }
