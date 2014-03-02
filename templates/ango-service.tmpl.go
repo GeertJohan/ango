@@ -46,12 +46,26 @@ type angoOutError struct {
 }
 
 {{range .Service.ServerProcedures}}
-	type angoArgsData{{.CapitalizedName}} struct {
+	type angoServerArgsData{{.CapitalizedName}} struct {
 		{{range .Args}}
 			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 	}
 	{{if not .Oneway}}
-		type angoRetsData{{.CapitalizedName}} struct {
+		type angoServerRetsData{{.CapitalizedName}} struct {
+			{{range .Rets}}
+				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+		}
+	{{end}}
+{{end}}
+
+
+{{range .Service.ClientProcedures}}
+	type angoClientArgsData{{.CapitalizedName}} struct {
+		{{range .Args}}
+			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+	}
+	{{if not .Oneway}}
+		type angoClientRetsData{{.CapitalizedName}} struct {
 			{{range .Rets}}
 				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 		}
@@ -131,7 +145,7 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 	}
 
 	// create session on server
-	session := server.NewSession(conn)
+	session := server.NewSession(client)
 	
 	// run protocol
 	err = run{{.Service.CapitalizedName}}Protocol(conn, session)
@@ -155,7 +169,7 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 			{{range .Service.ServerProcedures}}
 				case "{{.Name}}":
 					{{/* unmarshal procedure arguments */}}
-					procArgs := &angoArgsData{{.CapitalizedName}}{} {{/* var procArgs is referenced by .GoCallArgs */}}
+					procArgs := &angoServerArgsData{{.CapitalizedName}}{} {{/* var procArgs is referenced by .GoCallArgs */}}
 					err = json.Unmarshal(inMsg.Data, procArgs)
 					if err != nil {
 						return err
@@ -163,7 +177,7 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 
 					{{/* prepare for return values */}}
 					{{if not .Oneway}}
-						procRets := &angoRetsData{{.CapitalizedName}}{} {{/* var procRets is referenced by .GoCallRets */}}
+						procRets := &angoServerRetsData{{.CapitalizedName}}{} {{/* var procRets is referenced by .GoCallRets */}}
 						var procErr error {{/* var procErr is referenced by .GoCallRets */}}
 					{{end}}
 
@@ -214,6 +228,24 @@ type {{.Service.CapitalizedName}}Client struct {
 {{range .Service.ClientProcedures}}
 	// {{.CapitalizedName}} is a ango procedure defined in the .ango file
 	func (c *{{$.Service.CapitalizedName}}Client) {{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} ) {
-		//++ implement
+		{{if .Oneway}}
+			{{/* if service is oneway: there is no error return value. So we must create it in this block. */}}
+			var err error
+		{{end}}
+		fmt.Println("Called {{.CapitalizedName}}")
+		outMsg := angoOutMsg{
+			Type:      "req",
+			Procedure: "{{.Name}}",
+			Data:      &angoClientArgsData{{.CapitalizedName}}{
+			{{range .Args}}
+				{{.CapitalizedName}}: {{.Name}},{{end}}
+			},
+		}
+		err = c.ws.WriteJSON(outMsg)
+		if err != nil {
+			return {{/* when service is not oneway, this will return the error using named return values */}}
+		}
+
+		//++ TODO: add non-oneway return value handling
 	}
 {{end}}

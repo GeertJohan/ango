@@ -8,18 +8,21 @@ import (
 	"os"
 )
 
+// ++ This could move to implementation of ChatService.Server (type interface) see notes below.
 var idInc = &incremental.Int{}
 
-// Handler implements ChatServiceHandler
+// ChatServiceSession implements ChatServiceHandler
 type ChatServiceSession struct {
-	id int
+	id     int
+	client *ChatServiceClient
 }
 
-// NewChatService creates and returns a new ChatServiceHandler instance
-func NewChatServiceSession(ChatServiceClient) ChatServiceSessionInterface {
+// NewChatServiceSession creates and returns a new ChatServiceHandler instance
+func NewChatServiceSession(client *ChatServiceClient) ChatServiceSessionInterface {
 	// Create new ChatService instance with next id
 	return &ChatServiceSession{
-		id: idInc.Next(),
+		id:     idInc.Next(),
+		client: client,
 	}
 }
 
@@ -30,6 +33,7 @@ func (cs *ChatServiceSession) Stop(err error) {
 func (cs *ChatServiceSession) Add(a int, b int) (c int, err error) {
 	c = a + b
 	fmt.Printf("Call to Add(%d, %d) will return %d\n", a, b, c)
+	cs.client.DisplayNotification("we have", fmt.Sprintf("return value %d", c))
 	return c, nil
 }
 
