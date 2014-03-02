@@ -16,7 +16,7 @@ type ChatServiceSession struct {
 }
 
 // NewChatService creates and returns a new ChatServiceHandler instance
-func NewChatServiceSession() ChatServiceSessionInterface {
+func NewChatServiceSession(ChatServiceClient) ChatServiceSessionInterface {
 	// Create new ChatService instance with next id
 	return &ChatServiceSession{
 		id: idInc.Next(),
@@ -43,6 +43,9 @@ func (cs *ChatServiceSession) Notify(text string) {
 	fmt.Printf("instance %d have notification: %s\n", cs.id, text)
 }
 
+//++ TODO: maybe create interface ChatService.Server with function NewSession.
+//++ TODO: drop ErrorIncommingConnection and have global Debug implementation for debugging.
+//++ TODO: Errors on incomming connections are not relevant during production runtime. (net/http doesn't expose those errors either..)
 var server = &ChatServiceServer{
 	NewSession: NewChatServiceSession,
 	ErrorIncommingConnection: func(err error) {

@@ -46,19 +46,20 @@ type angoOutError struct {
 }
 
 {{range .Service.ServerProcedures}}
-type angoArgsData{{.CapitalizedName}} struct {
-	{{range .Args}}
-		{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
-}
-{{if not .Oneway}}
-type angoRetsData{{.CapitalizedName}} struct {
-	{{range .Rets}}
-		{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
-}
-{{end}}
+	type angoArgsData{{.CapitalizedName}} struct {
+		{{range .Args}}
+			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+	}
+	{{if not .Oneway}}
+		type angoRetsData{{.CapitalizedName}} struct {
+			{{range .Rets}}
+				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+		}
+	{{end}}
 {{end}}
 
 // {{.Service.CapitalizedName}}SessionInterface types all methods that can be called by the client
+//++ TODO: if generated code gets seperate package, rename to Session.
 type {{.Service.CapitalizedName}}SessionInterface interface {
 	// Stop is called when the session is about to end (websocket closed)
 	Stop(err error)
@@ -70,11 +71,13 @@ type {{.Service.CapitalizedName}}SessionInterface interface {
 }
 
 // New{{.Service.CapitalizedName}}SessionInterface must return a new instance implementing {{.Service.CapitalizedName}}SessionInterface
-type New{{.Service.CapitalizedName}}SessionInterface func()(handler {{.Service.CapitalizedName}}SessionInterface)
+//++ TODO: inline into Server when generated code gets its own package
+type New{{.Service.CapitalizedName}}SessionInterface func(*{{.Service.CapitalizedName}}Client)(handler {{.Service.CapitalizedName}}SessionInterface)
 
 // {{.Service.CapitalizedName}}Server handles incomming http requests
+//++ TOOD: rename to Server when generated code gets its own package
 type {{.Service.CapitalizedName}}Server struct {
-	NewSession               New{{.Service.CapitalizedName}}SessionInterface //++ inline type?
+	NewSession               New{{.Service.CapitalizedName}}SessionInterface
 	ErrorIncommingConnection func(err error)
 }
 
@@ -122,7 +125,13 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 
 	fmt.Println("Valid protocol version detected")
 
-	session := server.NewSession() //++ TODO: give {{.Service.CapitalizedName}}Client to NewSession()
+	// create new client instance with conn
+	client := &{{.Service.CapitalizedName}}Client{
+		ws: conn,
+	}
+
+	// create session on server
+	session := server.NewSession(conn)
 	
 	// run protocol
 	err = run{{.Service.CapitalizedName}}Protocol(conn, session)
@@ -132,6 +141,7 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 
 func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Service.CapitalizedName}}SessionInterface) error {
 	for {
+		{{/* unmarshal root message structure */}}
 		inMsg := &angoInMsg{}
 		err := conn.ReadJSON(inMsg)
 		if err != nil {
@@ -144,37 +154,44 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 			switch inMsg.Procedure {
 			{{range .Service.ServerProcedures}}
 				case "{{.Name}}":
+					{{/* unmarshal procedure arguments */}}
 					procArgs := &angoArgsData{{.CapitalizedName}}{} {{/* var procArgs is referenced by .GoCallArgs */}}
 					err = json.Unmarshal(inMsg.Data, procArgs)
 					if err != nil {
 						return err
 					}
-					{{if not .Oneway}}
-					procRets := &angoRetsData{{.CapitalizedName}}{} {{/* var procRets is referenced by .GoCallRets */}}
-					var procErr error {{/* var procErr is referenced by .GoCallRets */}}
-					{{.GoCallRets}} = {{end}} session.{{.CapitalizedName}}( {{.GoCallArgs}} )
 
+					{{/* prepare for return values */}}
 					{{if not .Oneway}}
-					outMsg := &angoOutMsg{
-						Type:       "res",
-						CallbackID: inMsg.CallbackID,
-					}
-					if procErr != nil {
-						outMsg.Error = &angoOutError{
-							Type: "errorReturned",
-							Message: procErr.Error(),
+						procRets := &angoRetsData{{.CapitalizedName}}{} {{/* var procRets is referenced by .GoCallRets */}}
+						var procErr error {{/* var procErr is referenced by .GoCallRets */}}
+					{{end}}
+
+					{{/* call procedure, accept return values when not oneway */}}
+					{{if not .Oneway}}{{.GoCallRets}} = {{end}}session.{{.CapitalizedName}}( {{.GoCallArgs}} )
+
+					{{/* return message with procedure return values */}}
+					{{if not .Oneway}}
+						outMsg := &angoOutMsg{
+							Type:       "res",
+							CallbackID: inMsg.CallbackID,
 						}
+						if procErr != nil {
+							outMsg.Error = &angoOutError{
+								Type: "errorReturned",
+								Message: procErr.Error(),
+							}
+							err = conn.WriteJSON(outMsg)
+							if err != nil {
+								return err
+							}
+							break
+						}
+						outMsg.Data = procRets
 						err = conn.WriteJSON(outMsg)
 						if err != nil {
 							return err
 						}
-						break
-					}
-					outMsg.Data = procRets
-					err = conn.WriteJSON(outMsg)
-					if err != nil {
-						return err
-					}
 					{{end}}
 			{{end}}
 			default:
@@ -182,8 +199,21 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 			}
 		case msgTypeResponse:
 			fmt.Printf("Have response: %d\n", inMsg.CallbackID)
+			//++ handle response
 		default:
 			return ErrInvalidMessageType
 		}
 	}
 }
+
+// {{.Service.CapitalizedName}}Client is a reference to the client end-point and available methods defined on the client
+type {{.Service.CapitalizedName}}Client struct {
+	ws *websocket.Conn
+}
+
+{{range .Service.ClientProcedures}}
+	// {{.CapitalizedName}} is a ango procedure defined in the .ango file
+	func (c *{{$.Service.CapitalizedName}}Client) {{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} ) {
+		//++ implement
+	}
+{{end}}
