@@ -4,12 +4,30 @@ chat.config(function(chatServiceProvider) {
 	chatServiceProvider.setDebug(true);
 
 	chatServiceProvider.listenOnWsError(function(err) {
-		console.error("catched err! " + err);
+		console.error("ws error: " + err);
+		console.log('setting reload timeout');
+		setTimeout(function() {location.reload();}, 2000);
 	});
 	
 	chatServiceProvider.listenOnWsClose(function() {
-		console.log('ws closed, setting reload timeouts');
+		console.log('ws closed, setting reload timeout');
 		setTimeout(function() {location.reload();}, 2000);
+	});
+	
+	chatServiceProvider.listenOnWrongVersion(function() {
+		console.log('wrong version, setting reload timeout');
+		setTimeout(function() {location.reload();}, 2000);
+	});
+
+	chatServiceProvider.setHandlers({
+		displayNotification: function(text) {
+			alert(text);
+		},
+		askQuestion: function(question) {
+			return {
+				answer: prompt(question),
+			};
+		},
 	});
 });
 

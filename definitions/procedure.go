@@ -53,6 +53,19 @@ func (p *Procedure) GoRets() string {
 	return retStr
 }
 
+// JsCallArgs returns the procedure call argument values
+// Used by ango-service.tmpl.js
+func (p *Procedure) JsCallArgs() string {
+	str := ""
+	for _, param := range p.Args {
+		if len(str) > 0 {
+			str += ", "
+		}
+		str += "messageObj.data." + param.Name
+	}
+	return str
+}
+
 // GoCallArgs returns the procedure call argument values
 // Used by ango-service.tmpl.go
 func (p *Procedure) GoCallArgs() string {

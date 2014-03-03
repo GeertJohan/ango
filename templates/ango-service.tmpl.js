@@ -20,6 +20,8 @@ angular.module('ango-{{.Service.Name}}', [])
 		var expNotAFunction = "AngoException: not a function";
 		var expWrongTypeArg = "AngoException: argument has wrong type";
 		var expNumberOutOfRange = "AngoException: argument (number) is out of valid range";
+		var expMissingProcedureHandler = "AngoException: missing procedure handler";
+		var expWrongTypeError = "AngoException: error returned by procedure handler must be string";
 
 		function AngoException(message) {
 			this.name = "AngoException";
@@ -96,11 +98,28 @@ angular.module('ango-{{.Service.Name}}', [])
 		makeEvent(this, "WsOpen");
 		makeEvent(this, "WsError");
 		makeEvent(this, "WsClose");
+		makeEvent(this, "WrongVersion");
 
 		// debugging settings
 		var debug = false;
 		this.setDebug = function(d) {
 			debug = d;
+		};
+
+		// handlers
+		var handlers = {};
+		this.setHandlers = function(h) {
+			//++ check available handlers, exception on missing handlers? or defer that to when the websocket is started?
+			//++ explicit start websocket? then error if handlers are missing? this would allow for global and local handlers to be implemented..
+			//++ question is, who decides when all handlers have been implemented and starts the websocket?
+			//++ for now: only allow handlers to be set up during config phase
+			var requiredHandlers = [{{.Service.JsClientProceduresStringAry}}];
+			for (var i = 0; i < requiredHandlers.length; i++) {
+				if(!h.hasOwnProperty(requiredHandlers[i])) {
+					throw new AngoException(expMissingProcedureHandler);
+				}
+			}
+			handlers = h;
 		};
 
 		// SERVICE CREATOR
@@ -164,8 +183,8 @@ angular.module('ango-{{.Service.Name}}', [])
 						// error on all deferreds
 						errQueue(errVersionMismatch);
 						errCallbacks(errVersionMismatch);
-
-						//++ hook faulty version
+						// run event
+						runEvent.onWrongVersion();
 						break;
 					}
 					break
@@ -347,13 +366,46 @@ angular.module('ango-{{.Service.Name}}', [])
 					
 					return
 				}
-				console.error("TODO: implement resolve() some more")
+				console.error("TODO: implement resolve() some more") //++ when?? this should be unreachable, right?
 			}
 
 			// handleRequestMessage handles an incomming request
-			function handleRequestMessage() {
-				//++ TODO: implement request()
-				console.error("TODO: implement request()")
+			function handleRequestMessage(messageObj) {
+				if(typeof(messageObj.procedure) != 'string') {
+					throw new AngoException(expProtocolError);
+				}
+				// throw an error if function doesn't exist
+				if(!handlers.hasOwnProperty(messageObj.procedure)) {
+					throw new AngoException(expProtocolError);
+				}
+				switch(messageObj.procedure) {
+					{{range .Service.ClientProcedures}}
+						case '{{.Name}}':
+							{{if not .Oneway}}retsProm = {{end}}handlers.{{.Name}}({{.JsCallArgs}});
+							{{if not .Oneway}}
+								$q.when(retsProm).then(
+									function(rets) {
+										var outMsg = angular.toJson({
+											type: 'res',
+											cb_id: messageObj.cb_id,
+											data: rets,
+										}, true);
+										ws.send(outMsg);
+									}, function(err) {
+										if(typeof(err) != 'string') {
+											throw new AngoException(expWrongTypeError);
+										}
+										var outMsg = angular.toJson({
+											type: 'res',
+											cb_id: messageObj.cb_id,
+											error: err,
+										}, true);
+										ws.send(outMsg);
+									})
+							{{end}}
+						break;
+					{{end}}
+				}
 			}
 
 			// PROCEDURES, as defined in .ango file

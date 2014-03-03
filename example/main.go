@@ -13,17 +13,32 @@ var idInc = &incremental.Int{}
 
 // ChatServiceSession implements ChatServiceHandler
 type ChatServiceSession struct {
+	name   string
 	id     int
 	client *ChatServiceClient
 }
 
 // NewChatServiceSession creates and returns a new ChatServiceHandler instance
 func NewChatServiceSession(client *ChatServiceClient) ChatServiceSessionInterface {
-	// Create new ChatService instance with next id
-	return &ChatServiceSession{
+	session := &ChatServiceSession{
 		id:     idInc.Next(),
 		client: client,
 	}
+
+	// ask users name in a goroutine to not block the session creation
+	go func() {
+		answer, err := client.AskQuestion("what's your name?")
+		if err != nil {
+			if err != ErrNotImplementedYet {
+				panic("TODO: implement error handling." + err.Error())
+			}
+		}
+		fmt.Printf("welcome %s\n", answer)
+		session.name = answer
+	}()
+
+	// return session
+	return session
 }
 
 func (cs *ChatServiceSession) Stop(err error) {

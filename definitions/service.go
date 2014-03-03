@@ -29,3 +29,13 @@ func NewService() *Service {
 func (s *Service) CapitalizedName() string {
 	return strings.ToUpper(s.Name[:1]) + s.Name[1:]
 }
+
+// JsClientProceduresStringAry returns a comma seperated list of js strings
+// Used by ango-service.tmpl.js
+func (s *Service) JsClientProceduresStringAry() string {
+	strs := make([]string, 0, len(s.ClientProcedures))
+	for name := range s.ClientProcedures {
+		strs = append(strs, `'`+name+`'`)
+	}
+	return strings.Join(strs, ", ")
+}

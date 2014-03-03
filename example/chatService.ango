@@ -10,4 +10,4 @@ server oneway notify(text string)
 //server getRandoms()(r1 int, r2 int, r3 int, r3 int)
 
 client oneway displayNotification(subject string, text string)
-//client askQuestion(question string)(answer string)
+client askQuestion(question string)(answer string)

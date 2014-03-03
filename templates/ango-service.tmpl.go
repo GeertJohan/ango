@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GeertJohan/go.wstext"
+	"github.com/GeertJohan/go.incremental"
 	"github.com/gorilla/websocket"
 	"encoding/json"
 	"net/http"
@@ -15,6 +16,8 @@ var (
 	ErrInvalidVersionString = errors.New("invalid version string")
 	ErrInvalidMessageType   = errors.New("invalid message type")
 	ErrUnkonwnProcedure     = errors.New("unknown procedure")
+	ErrNotImplementedYet    = errors.New("not implemented yet")
+	ErrInvalidCallbackID    = errors.New("callbackID is inavlid")
 )
 
 const (
@@ -141,19 +144,21 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 
 	// create new client instance with conn
 	client := &{{.Service.CapitalizedName}}Client{
-		ws: conn,
+		ws:               conn,
+		callbackInc:      &incremental.Uint64{},
+		callbackChannels: make(map[uint64]chan *angoInMsg),
 	}
 
 	// create session on server
 	session := server.NewSession(client)
 	
 	// run protocol
-	err = run{{.Service.CapitalizedName}}Protocol(conn, session)
+	err = run{{.Service.CapitalizedName}}Protocol(conn, client, session)
 	// err can be nil, but we want to call .Stop always
 	session.Stop(err)
 }
 
-func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Service.CapitalizedName}}SessionInterface) error {
+func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *{{.Service.CapitalizedName}}Client, session {{.Service.CapitalizedName}}SessionInterface) error {
 	for {
 		{{/* unmarshal root message structure */}}
 		inMsg := &angoInMsg{}
@@ -212,8 +217,13 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 				return ErrUnkonwnProcedure
 			}
 		case msgTypeResponse:
-			fmt.Printf("Have response: %d\n", inMsg.CallbackID)
-			//++ handle response
+			callbackCh := client.callbackChannels[inMsg.CallbackID]
+			if callbackCh == nil {
+				return ErrInvalidCallbackID
+			}
+			delete(client.callbackChannels, inMsg.CallbackID)
+
+			callbackCh <- inMsg
 		default:
 			return ErrInvalidMessageType
 		}
@@ -222,7 +232,9 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, session {{.Se
 
 // {{.Service.CapitalizedName}}Client is a reference to the client end-point and available methods defined on the client
 type {{.Service.CapitalizedName}}Client struct {
-	ws *websocket.Conn
+	ws               *websocket.Conn
+	callbackInc      *incremental.Uint64
+	callbackChannels map[uint64]chan *angoInMsg
 }
 
 {{range .Service.ClientProcedures}}
@@ -241,11 +253,44 @@ type {{.Service.CapitalizedName}}Client struct {
 				{{.CapitalizedName}}: {{.Name}},{{end}}
 			},
 		}
+
+		{{if not .Oneway}}
+			// create callback channel
+			callbackCh := make(chan *angoInMsg, 1)
+			outMsg.CallbackID = c.callbackInc.Next()
+			c.callbackChannels[outMsg.CallbackID] = callbackCh
+		{{end}}
+
+		// write message
 		err = c.ws.WriteJSON(outMsg)
 		if err != nil {
 			return {{/* when service is not oneway, this will return the error using named return values */}}
 		}
 
-		//++ TODO: add non-oneway return value handling
+		{{if not .Oneway}}
+			// wait for response message
+			resMsg := <- callbackCh
+			close(callbackCh)
+
+			// check for error
+			if(resMsg.Error != nil) {
+				var errStr string
+				err = json.Unmarshal(resMsg.Error, &errStr)
+				if err != nil {
+					return
+				}
+				err = errors.New(errStr)
+				return
+			}
+			retsData := &angoClientRetsData{{.CapitalizedName}}{}
+			err = json.Unmarshal(resMsg.Data, retsData)
+			if err != nil {
+				return
+			}
+			{{range .Rets}}
+				{{.Name}} = retsData.{{.CapitalizedName}}{{end}}
+		{{end}}
+
+		return
 	}
 {{end}}
