@@ -1,6 +1,6 @@
 
 [![Build Status](https://drone.io/github.com/GeertJohan/ango/status.png)](https://drone.io/github.com/GeertJohan/ango/latest)
-[![Issues](http://img.shields.io/github/issues/GeertJohan/ango.svg?flat-squared)](https://github.com/GeertJohan/ango/issues)
+[![Issues](http://img.shields.io/github/issues/GeertJohan/ango.svg?style=flat-square)](https://github.com/GeertJohan/ango/issues)
 
 ## Ango: Angular <-> Go communication
 
