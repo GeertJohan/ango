@@ -1,4 +1,7 @@
-[![Stories in Ready](https://badge.waffle.io/geertjohan/ango.png?label=ready&title=Ready)](https://waffle.io/geertjohan/ango)
+
+[![Build Status](https://drone.io/github.com/GeertJohan/ango/status.png)](https://drone.io/github.com/GeertJohan/ango/latest)
+[![Issues](http://img.shields.io/github/issues/GeertJohan/ango.svg?flat-squared)](https://github.com/GeertJohan/ango/issues)
+
 ## Ango: Angular <-> Go communication
 
 `ango` is a tool that generates a protocol for communication between [Go](http://golang.org) and [AngularJS](http://angularjs.org) over http/websockets.
@@ -40,8 +43,6 @@ Several files describe the working of ango.
  - read [thoughts.md](notes/thoughts.md) for idea's and upcomming features.
 
 ### Development
-
-[![Build Status](https://drone.io/github.com/GeertJohan/ango/status.png)](https://drone.io/github.com/GeertJohan/ango/latest)
 
 #### Devtool
 This project involves several packages. There's a simple tool to automatically run and update the workspace as you go.
