@@ -1,11 +1,11 @@
 ## Protocol
 
-The generated protocol code is formed arround a simple set of json messages.
+The generated protocol code is based on a simple set of JSON messages.
 Only one set of plain-text messages will be sent at the start, containing the version string and a "good" or "invalid" response.
-
+After that, the protocol is 'stateless', in the sense that all JSON messages defined below can be sent at any time.
 
 ### Version verification
-The client opens a websocket to server. Server waits for a plain-text message. Client sends the version string (sha256). Server compares the version string and returns "good" or "invalid"
+The client opens a websocket to server. Server waits for a plain-text message. Client sends the version string (sha256). Server validates the version string and returns "good" or "invalid". When the version is invalid, the server closes the connection.
 
 ### JSON request/response
 The request and response formats are equal for both client->server and server->client.
