@@ -1,3 +1,6 @@
+// WARNING This is generated code by the ango tool (github.com/GeertJohan/ango)
+// DO NOT EDIT unless you know what you're doing!
+
 package {{.PackageName}}
 
 import (
@@ -10,7 +13,7 @@ import (
 	"net/http"
 )
 
-var protocolVersion = "{{.ProtocolVersion}}"
+const ProtocolVersion = "{{.ProtocolVersion}}"
 
 var (
 	ErrInvalidVersionString = errors.New("invalid version string")
@@ -122,11 +125,11 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 		}
 		return
 	}
-	if receivedVersion != protocolVersion {
+	if receivedVersion != ProtocolVersion {
 		_ = textconn.WriteText("invalid")
 		fmt.Printf("err: %s\n", err)
 		fmt.Printf("in: '%s'\n", receivedVersion)
-		fmt.Printf("hv: '%s'\n", protocolVersion)
+		fmt.Printf("hv: '%s'\n", ProtocolVersion)
 		if server.ErrorIncommingConnection != nil {
 			server.ErrorIncommingConnection(ErrInvalidVersionString)
 		}
