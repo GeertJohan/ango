@@ -2,7 +2,7 @@
 [![Build Status](https://drone.io/github.com/GeertJohan/ango/status.png)](https://drone.io/github.com/GeertJohan/ango/latest)
 [![Issues](http://img.shields.io/github/issues/GeertJohan/ango.svg?style=flat-square)](https://github.com/GeertJohan/ango/issues)
 
-## Ango: Angular <-> Go communication
+## Ango: AngularJS <-> Go communication
 
 `ango` is a tool that generates a protocol for communication between [Go](http://golang.org) and [AngularJS](http://angularjs.org) over http/websockets.
 
