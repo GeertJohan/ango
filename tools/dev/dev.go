@@ -208,7 +208,7 @@ func rebuildAngo() {
 	stopWg.Add(1)
 	defer stopWg.Done()
 
-	cmdRerun := exec.Command("rerun", "-build-only", pkg.ImportPath)
+	cmdRerun := exec.Command("rerun", "--no-run", pkg.ImportPath)
 	cmdRerun.Stdin = os.Stdin
 	cw := &CheckWriter{
 		wr:     os.Stderr,
