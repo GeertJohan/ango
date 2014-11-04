@@ -1,3 +1,6 @@
+// WARNING This is generated code by the ango tool (github.com/GeertJohan/ango)
+// DO NOT EDIT unless you know what you're doing!
+
 angular.module('ango-{{.Service.Name}}', [])
 	.provider('{{.Service.Name}}', function() {
 
