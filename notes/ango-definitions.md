@@ -57,7 +57,7 @@ KeyType  = Type .
 ```
 
 #### Struct types
-A struct type is directly compatible Go code. In javascript this is represented as a 
+A struct type is directly compatible Go code. In javascript this is represented as an object.
 
 ```
 StructType  = "struct" "{" { FieldDecl } "}" .
