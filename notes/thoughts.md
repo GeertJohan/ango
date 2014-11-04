@@ -39,3 +39,5 @@ service {
 }
 ```
 
+### options such as direct channel
+In some cases it would be nice to receive a channel from the returning function call go > angular. The return values and/or error would be sent on the channel. Maybe make this some kind of option keyword for procedure definitions.
