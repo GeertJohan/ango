@@ -4,9 +4,9 @@
 
 ## Ango: AngularJS <-> Go communication
 
-`ango` is a tool that generates a protocol for communication between [Go](http://golang.org) and [AngularJS](http://angularjs.org) over http/websockets.
+`ango` is a tool that generates a protocol and API's for communication between [Go](http://golang.org) and [AngularJS](http://angularjs.org) over websockets.
 
-**This project is still under development, please do look around and let me know if you have good ideas**
+**This project is under development and API's are likely to break.**
 
 ### Goals
 
@@ -14,24 +14,24 @@ The main goals are:
  - async server > client RPC.
  - async client > server RPC.
  - typed arguments and return values (see types below).
- - work with Go packages `net/http` and `encoding/json`.
- - integrate into AngularJS as includable module + ng service.
+ - compatibility with Go packages `net/http` and `encoding/json`.
+ - integrate into AngularJS as includable `module` providing a `service`.
  - underlying protocol and communication is not directly visible for user. Calls feel native/local.
 
-What I don't want to do:
+What I don't want to do (not goals):
  - runtime discovery of available procedures.
  - A generic protocol designed for multiple languages/frameworks.
 
-Therefore I chose to create a tool that generates Go and Angular/javascript, so both server and client hold all information to communicate and know whats comming at any time.
+I chose to create a tool that generates Go and Angular/javascript without external dependencies, so the generated server and client code contain all information to communicate.
 
-Code generated for Go can be copied into any go package. The code doesn't form a package itself.
+~~Code generated for Go can be copied into any go package. The code doesn't form a package itself.~~
 NEEDS THINKING: this has drawbacks on the generated code (need to use scope to hide inner variables from the rest of package).
 
-For the client side a single `.js` file is generated  holding an angular module. The module can be included by any other angular module.
+For the client side a single `.js` file is generated containing an angular module. The module can be included by any other angular module.
 
 ### Terminology
-A **service** exists of one or more **procedures** server- and/or client-side.
-A **procedure** within a service resides client- or server-side, and can be called by the other party.
+A **service** exists of one or more **procedures** defined on the server- and/or client-side.
+A **procedure** within a service is implemented on either the client- or server-side, and can be called by the other side.
 A procedure can have zero or more arguments and zero or more return values.
 
 ### Notes
