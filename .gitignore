@@ -5,9 +5,13 @@
 /example/example.exe
 
 /dev
+/dev.exe
 /tools/dev/dev
+/tools/dev/dev.exe
 /publish
+/publish.exe
 /tools/publish/publish
+/tools/publish/publish.exe
 
 # ignore any generated code
 *.gen.js
