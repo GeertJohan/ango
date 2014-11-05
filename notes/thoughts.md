@@ -50,6 +50,8 @@ The ango internals in the Go server must use channels to communicate result data
 It would be smart to make the channel buffered (cap 1) so the websocket handler won't block on sending on the channel.
 
 ### generated Go code as a package
+This describes a new approach to project setup and ango cmd usage.
+
 Standardize `name foobarservice` (all lowercase).
 
 In project have:
@@ -65,9 +67,9 @@ In project have:
 
 main.go could contain `// go:generate` clause.
 
-Running ango would be as simple as `ango importpath/to/chatservice.ango`.
+Running ango would be as simple as running `ango chatservice.ango` in the working directory `myproject`.
 
-This would generate go sources in the importpath/to/chatservice folder. Javascript sources are generated to /chatservice.gen.js
+This would generate go sources in the myproject/chatservice folder. Javascript sources are generated to /myproject/chatservice.gen.js
 
 Optionally a different path for the javascript or go can be given with the --js-path and --go-path flags which are either relative to ango's working directory or absolute.
 
