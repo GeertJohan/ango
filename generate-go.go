@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/GeertJohan/ango/definitions"
 	"github.com/GeertJohan/go.ask"
+	"go/format"
 	"os"
 	"path/filepath"
 )
@@ -26,6 +28,27 @@ func generateGo(service *definitions.Service) error {
 			os.Exit(1)
 		}
 		outputDir = filepath.Join(wd, flags.GoDir)
+	}
+
+	//prepare data
+	data := &dataGo{
+		PackageName:     flags.GoPackage,
+		ProtocolVersion: calculateVersion(service),
+		Service:         service,
+	}
+
+	// execute template into buffer
+	generatedSourceBuffer := &bytes.Buffer{}
+	err = tmplGo.Execute(generatedSourceBuffer, data)
+	if err != nil {
+		fmt.Printf("Error executing go template: %s\n", err)
+		os.Exit(1)
+	}
+
+	// format generated source
+	formattedSource, err := format.Source(generatedSourceBuffer.Bytes())
+	if err != nil {
+		fmt.Printf("error formatting source: %v\n", err)
 	}
 
 	// create outputFile
@@ -51,18 +74,9 @@ func generateGo(service *definitions.Service) error {
 	}
 	defer outputFile.Close()
 
-	//prepare data
-	data := &dataGo{
-		PackageName:     flags.GoPackage,
-		ProtocolVersion: calculateVersion(service),
-		Service:         service,
-	}
-
-	// execute template
-	err = tmplGo.Execute(outputFile, data)
+	_, err = outputFile.Write(formattedSource)
 	if err != nil {
-		fmt.Printf("Error executing go template: %s\n", err)
-		os.Exit(1)
+		fmt.Printf("error writing formatted source to file: %v\n", err)
 	}
 
 	// all done
