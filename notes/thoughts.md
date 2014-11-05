@@ -48,3 +48,52 @@ For returning client procedures:
 The ango internals in the Go server must use channels to communicate result data from the websocket to the blocking procedure call. It could be useful to expose the channel to the user. This allows the user to handle the result at a later time, or in certain situations skip the result all together (never read it from the channel).
 
 It would be smart to make the channel buffered (cap 1) so the websocket handler won't block on sending on the channel.
+
+### generated Go code as a package
+Standardize `name foobarservice` (all lowercase).
+
+In project have:
+```
+/myproject
+	/chatservice          // folder containing generated code for chatservice.ango, package chatservice
+		/types.gen.go     // generated go code for custom types defined in chatservice.ango
+		/server.gen.go    // generated go code implementing the server as defined in chatservice.ango
+	/chatservice.ango     // ango definitions for chatservice
+	/chatservice.gen.js   // generated js code implementing types and client as defined in chatservice.ango
+	/main.go              // main program code
+```
+
+main.go could contain `// go:generate` clause.
+
+Running ango would be as simple as `ango importpath/to/chatservice.ango`.
+
+This would generate go sources in the importpath/to/chatservice folder. Javascript sources are generated to /chatservice.gen.js
+
+Optionally a different path for the javascript or go can be given with the --js-path and --go-path flags which are either relative to ango's working directory or absolute.
+
+The package myproject/chatservice can contain custom (non-generated) code with access to the service internals. This could be used to create hooks (next topic)
+
+### Hooks
+It could be useful to have access to the service internal (debugging, low level access).
+
+This could be achieved by doing:
+
+```
+// generated code:
+var someHook func(val string)
+
+func serviceInternals(val string) {
+	if someHook != nil {
+		someHook(val)
+	}
+}
+```
+
+Custom code could implement this:
+```
+func init() {
+	someHook = func(val string) {
+		fmt.Printf("interesting: %s\n", val)
+	}
+}
+```
