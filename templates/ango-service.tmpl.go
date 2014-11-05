@@ -81,7 +81,7 @@ type angoOutError struct {
 // {{.Service.CapitalizedName}}SessionInterface types all methods that can be called by the client
 //++ TODO: if generated code gets seperate package, rename to Session.
 type {{.Service.CapitalizedName}}SessionInterface interface {
-	// Stop is called when the session is about to end (websocket closed)
+	// Stop is called when the session is closing (websocket closed)
 	Stop(err error)
 
 	{{range .Service.ServerProcedures}}
@@ -90,14 +90,14 @@ type {{.Service.CapitalizedName}}SessionInterface interface {
 	{{end}}
 }
 
-// New{{.Service.CapitalizedName}}SessionInterface must return a new instance implementing {{.Service.CapitalizedName}}SessionInterface
-//++ TODO: inline into Server when generated code gets its own package
-type New{{.Service.CapitalizedName}}SessionInterface func(*{{.Service.CapitalizedName}}Client)(handler {{.Service.CapitalizedName}}SessionInterface)
+// New{{.Service.CapitalizedName}}SessionFunc must return a new instance implementing {{.Service.CapitalizedName}}SessionInterface
+//++ TODO: rename to NewSessionFunc (?) when generated code gets it's own package
+type New{{.Service.CapitalizedName}}SessionFunc func(*{{.Service.CapitalizedName}}Client)(handler {{.Service.CapitalizedName}}SessionInterface)
 
 // {{.Service.CapitalizedName}}Server handles incomming http requests
 //++ TOOD: rename to Server when generated code gets its own package
 type {{.Service.CapitalizedName}}Server struct {
-	NewSession               New{{.Service.CapitalizedName}}SessionInterface
+	NewSession               New{{.Service.CapitalizedName}}SessionFunc
 	ErrorIncommingConnection func(err error)
 }
 
