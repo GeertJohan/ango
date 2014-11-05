@@ -53,6 +53,7 @@ func generateGo(service *definitions.Service) error {
 	formattedSource, err := format.Source(generatedSourceBuffer.Bytes())
 	if err != nil {
 		fmt.Printf("error formatting source: %v\n", err)
+		formattedSource = generatedSourceBuffer.Bytes()
 	}
 
 	// create outputFile

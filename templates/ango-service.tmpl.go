@@ -241,58 +241,90 @@ type Client struct {
 
 {{range .Service.ClientProcedures}}
 	// {{.CapitalizedName}} is a ango procedure defined in the .ango file
-	func (c *Client) {{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} ) {
-		{{if .Oneway}}
-			{{/* if service is oneway: there is no error return value. So we must create it in this block. */}}
-			var err error
-		{{end}}
-		fmt.Println("Called {{.CapitalizedName}}")
-		outMsg := angoOutMsg{
-			Type:      "req",
-			Procedure: "{{.Name}}",
-			Data:      &angoClientArgsData{{.CapitalizedName}}{
-			{{range .Args}}
-				{{.CapitalizedName}}: {{.Name}},{{end}}
-			},
+	{{if .Oneway}}
+		func (c *Client) {{.CapitalizedName}}( {{.GoArgs}} )( err error ) {
+			fmt.Println("Called oneway service {{.CapitalizedName}}")
+			outMsg := angoOutMsg{
+				Type:      "req",
+				Procedure: "{{.Name}}",
+				Data:      &angoClientArgsData{{.CapitalizedName}}{
+				{{range .Args}}
+					{{.CapitalizedName}}: {{.Name}},{{end}}
+				},
+			}
+
+			// write message
+			err = c.ws.WriteJSON(outMsg)
+			if err != nil {
+				return {{/* when service is not oneway, this will return the error using named return values */}}
+			}
+
+			// all done
+			return
 		}
+	{{else}}
+		type {{.CapitalizedName}}Result struct {
+			// error
+			Err error
 
-		{{if not .Oneway}}
-			// create callback channel
-			callbackCh := make(chan *angoInMsg, 1)
-			outMsg.CallbackID = c.callbackInc.Next()
-			c.callbackChannels[outMsg.CallbackID] = callbackCh
-		{{end}}
-
-		// write message
-		err = c.ws.WriteJSON(outMsg)
-		if err != nil {
-			return {{/* when service is not oneway, this will return the error using named return values */}}
+			{{range .Rets}}
+				{{.CapitalizedName}} {{.Type}}{{end}}
 		}
+		func (c *Client) {{.CapitalizedName}}( {{.GoArgs}} )( retCh <-chan *{{.CapitalizedName}}Result ) {
+			ch := make(chan *{{.CapitalizedName}}Result, 1)
+			retCh = ch
+			response := &{{.CapitalizedName}}Result{}
+			fmt.Println("Called returning service {{.CapitalizedName}}")
+			
+			go func() {
+				defer func() {
+					ch <- response
+				}()
 
-		{{if not .Oneway}}
-			// wait for response message
-			resMsg := <- callbackCh
-			close(callbackCh)
+				outMsg := angoOutMsg{
+					Type:      "req",
+					Procedure: "{{.Name}}",
+					Data:      &angoClientArgsData{{.CapitalizedName}}{
+					{{range .Args}}
+						{{.CapitalizedName}}: {{.Name}},{{end}}
+					},
+				}
 
-			// check for error
-			if(resMsg.Error != nil) {
-				var errStr string
-				err = json.Unmarshal(resMsg.Error, &errStr)
-				if err != nil {
+				// create callback channel
+				callbackCh := make(chan *angoInMsg, 1)
+				outMsg.CallbackID = c.callbackInc.Next()
+				c.callbackChannels[outMsg.CallbackID] = callbackCh
+
+				// write message
+				response.Err = c.ws.WriteJSON(outMsg)
+				if response.Err != nil {
+					return {{/* when service is not oneway, this will return the error using named return values */}}
+				}
+
+				// wait for response message
+				respMsg := <- callbackCh
+				close(callbackCh)
+
+				// check for error
+				if(respMsg.Error != nil) {
+					var errStr string
+					response.Err = json.Unmarshal(respMsg.Error, &errStr)
+					if response.Err != nil {
+						return
+					}
+					response.Err = errors.New(errStr)
 					return
 				}
-				err = errors.New(errStr)
-				return
-			}
-			retsData := &angoClientRetsData{{.CapitalizedName}}{}
-			err = json.Unmarshal(resMsg.Data, retsData)
-			if err != nil {
-				return
-			}
-			{{range .Rets}}
-				{{.Name}} = retsData.{{.CapitalizedName}}{{end}}
-		{{end}}
+				retsData := &angoClientRetsData{{.CapitalizedName}}{}
+				response.Err = json.Unmarshal(respMsg.Data, retsData)
+				if response.Err != nil {
+					return
+				}
+				{{range .Rets}}
+					response.{{.CapitalizedName}} = retsData.{{.CapitalizedName}}{{end}}
+			}()
 
-		return
-	}
+			return
+		}
+	{{end}}
 {{end}}

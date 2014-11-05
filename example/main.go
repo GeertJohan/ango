@@ -30,14 +30,14 @@ func NewChatServiceSession(client *chatservice.Client) chatservice.SessionHandle
 
 	// ask users name in a goroutine to not block the session creation
 	go func() {
-		answer, err := client.AskQuestion("what's your name?")
-		if err != nil {
-			if err != chatservice.ErrNotImplementedYet {
-				panic("TODO: implement error handling." + err.Error())
+		result := <-client.AskQuestion("what's your name?")
+		if result.Err != nil {
+			if result.Err != chatservice.ErrNotImplementedYet {
+				panic("TODO: implement error handling." + result.Err.Error())
 			}
 		}
-		fmt.Printf("welcome %s\n", answer)
-		session.name = answer
+		fmt.Printf("welcome %s\n", result.Answer)
+		session.name = result.Answer
 	}()
 
 	// return session
@@ -51,7 +51,7 @@ func (cs *ChatServiceSession) Stop(err error) {
 func (cs *ChatServiceSession) Add(a int, b int) (c int, err error) {
 	c = a + b
 	fmt.Printf("Call to Add(%d, %d) will return %d\n", a, b, c)
-	cs.client.DisplayNotification("we have", fmt.Sprintf("return value %d", c))
+	cs.client.DisplayNotification("The server did some calculations..", fmt.Sprintf("We would like to inform you that %d+%d equals %d", a, b, c))
 	return c, nil
 }
 

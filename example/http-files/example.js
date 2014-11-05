@@ -20,8 +20,8 @@ chat.config(function(chatserviceProvider) {
 	});
 
 	chatserviceProvider.setHandlers({
-		displayNotification: function(text) {
-			alert(text);
+		displayNotification: function(subject, text) {
+			alert(subject + ":\n\t" + text);
 		},
 		askQuestion: function(question) {
 			return {
