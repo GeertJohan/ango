@@ -142,7 +142,7 @@ func watchGeneratedSource() {
 		stop(1)
 		return
 	}
-	err = watcher.WatchFlags(`example/chatservice.gen.js`, fsnotify.FSN_MODIFY)
+	err = watcher.WatchFlags(`example/http-files/chatservice.gen.js`, fsnotify.FSN_MODIFY)
 	if err != nil {
 		fmt.Printf("Error starting watch on js generated file: %s\n", err)
 		stop(1)
