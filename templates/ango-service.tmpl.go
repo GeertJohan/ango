@@ -264,7 +264,7 @@ type Client struct {
 		}
 	{{else}}
 		type {{.CapitalizedName}}Result struct {
-			// error
+			// Err is set when calling the procedure failed, or when the procedure returned with an error.
 			Err error
 
 			{{range .Rets}}
