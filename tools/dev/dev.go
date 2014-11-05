@@ -302,7 +302,7 @@ func angoExample() {
 	defer genLock.RUnlock()
 	timeLastGenCodeOverwrite = time.Now()
 	fmt.Println("Running ango tool for example/chatService.ango")
-	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--force-overwrite")
+	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--js-path=example/http-files", "--force-overwrite")
 	cmdAngoExample.Stdin = os.Stdin
 	cmdAngoExample.Stdout = sgr.NewColorWriter(os.Stdout, sgr.FgBlue, false)
 	cmdAngoExample.Stderr = sgr.NewColorWriter(os.Stderr, sgr.FgBlue, false)
