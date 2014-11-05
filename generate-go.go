@@ -27,12 +27,16 @@ func generateGo(service *definitions.Service) error {
 			fmt.Printf("Error getting PWD: %s\n", err)
 			os.Exit(1)
 		}
-		outputDir = filepath.Join(wd, flags.GoDir)
+		if flags.GoDir == "" {
+			outputDir = filepath.Join(wd, filepath.Dir(flags.InputFile), service.Name)
+		} else {
+			outputDir = filepath.Join(wd, flags.GoDir)
+		}
 	}
 
 	//prepare data
 	data := &dataGo{
-		PackageName:     flags.GoPackage,
+		PackageName:     service.Name,
 		ProtocolVersion: calculateVersion(service),
 		Service:         service,
 	}
@@ -52,14 +56,14 @@ func generateGo(service *definitions.Service) error {
 	}
 
 	// create outputFile
-	outputFileName := fmt.Sprintf("ango-%s.gen.go", service.Name)
+	outputFileName := "server.gen.go"
 	outputFileAbs := filepath.Join(outputDir, outputFileName)
 	var outputFile *os.File
 	outputFile, err = os.OpenFile(outputFileAbs, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0666)
 	if err != nil {
 		if os.IsExist(err) {
 			// output file exists, ask user if we should overwrite.
-			if flags.ForceOverwrite || ask.MustAskf("File '%s' exists, overwrite?", filepath.Join(flags.JsDir, outputFileName)) {
+			if flags.ForceOverwrite || ask.MustAskf("File '%s' exists, overwrite?", outputFileAbs) {
 				outputFile, err = os.OpenFile(outputFileAbs, os.O_TRUNC|os.O_WRONLY, 0666)
 				if err != nil {
 					return err

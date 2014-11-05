@@ -34,7 +34,7 @@ var (
 	stopWg sync.WaitGroup
 )
 
-const exampleAngoFile = "example/chatService.ango"
+const exampleAngoFile = "example/chatservice.ango"
 
 type CheckWriter struct {
 	wr     io.Writer
@@ -136,13 +136,13 @@ func watchGeneratedSource() {
 		return
 	}
 	defer watcher.Close()
-	err = watcher.WatchFlags(`example/ango-chatService.gen.go`, fsnotify.FSN_MODIFY)
+	err = watcher.WatchFlags(`example/chatservice/server.gen.go`, fsnotify.FSN_MODIFY)
 	if err != nil {
 		fmt.Printf("Error starting watch on go generated file: %s\n", err)
 		stop(1)
 		return
 	}
-	err = watcher.WatchFlags(`example/http-files/ango-chatService.gen.js`, fsnotify.FSN_MODIFY)
+	err = watcher.WatchFlags(`example/chatservice.gen.js`, fsnotify.FSN_MODIFY)
 	if err != nil {
 		fmt.Printf("Error starting watch on js generated file: %s\n", err)
 		stop(1)
@@ -302,7 +302,7 @@ func angoExample() {
 	defer genLock.RUnlock()
 	timeLastGenCodeOverwrite = time.Now()
 	fmt.Println("Running ango tool for example/chatService.ango")
-	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--js", "example/http-files", "--go", "example", "--force-overwrite")
+	cmdAngoExample := exec.Command(filepath.Join(wd, "ango"), "--verbose", "-i", exampleAngoFile, "--force-overwrite")
 	cmdAngoExample.Stdin = os.Stdin
 	cmdAngoExample.Stdout = sgr.NewColorWriter(os.Stdout, sgr.FgBlue, false)
 	cmdAngoExample.Stderr = sgr.NewColorWriter(os.Stderr, sgr.FgBlue, false)

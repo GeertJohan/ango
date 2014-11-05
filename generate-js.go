@@ -26,11 +26,15 @@ func generateJs(service *definitions.Service) error {
 			fmt.Printf("Error getting PWD: %s\n", err)
 			os.Exit(1)
 		}
-		outputDir = filepath.Join(wd, flags.JsDir)
+		if flags.JsDir == "" {
+			outputDir = filepath.Join(wd, filepath.Dir(flags.InputFile))
+		} else {
+			outputDir = filepath.Join(wd, flags.JsDir)
+		}
 	}
 
 	// create outputFile
-	outputFileName := fmt.Sprintf("ango-%s.gen.js", service.Name)
+	outputFileName := fmt.Sprintf("%s.gen.js", service.Name)
 	outputFileAbs := filepath.Join(outputDir, outputFileName)
 	var outputFile *os.File
 	outputFile, err = os.OpenFile(outputFileAbs, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0666)
