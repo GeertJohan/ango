@@ -1,25 +1,25 @@
-var chat = angular.module('chatExample', ['ango-chatService']);
+var chat = angular.module('chatExample', ['ango-chatservice']);
 
-chat.config(function(chatServiceProvider) {
-	chatServiceProvider.setDebug(true);
+chat.config(function(chatserviceProvider) {
+	chatserviceProvider.setDebug(true);
 
-	chatServiceProvider.listenOnWsError(function(err) {
+	chatserviceProvider.listenOnWsError(function(err) {
 		console.error("ws error: " + err);
 		console.log('setting reload timeout');
 		setTimeout(function() {location.reload();}, 2000);
 	});
 	
-	chatServiceProvider.listenOnWsClose(function() {
+	chatserviceProvider.listenOnWsClose(function() {
 		console.log('ws closed, setting reload timeout');
 		setTimeout(function() {location.reload();}, 2000);
 	});
 	
-	chatServiceProvider.listenOnWrongVersion(function() {
+	chatserviceProvider.listenOnWrongVersion(function() {
 		console.log('wrong version, setting reload timeout');
 		setTimeout(function() {location.reload();}, 2000);
 	});
 
-	chatServiceProvider.setHandlers({
+	chatserviceProvider.setHandlers({
 		displayNotification: function(text) {
 			alert(text);
 		},
@@ -31,13 +31,13 @@ chat.config(function(chatServiceProvider) {
 	});
 });
 
-chat.controller('mainCtrl', function($scope, chatService) {
-	console.log(chatService.getServiceName());
-	console.log(chatService.getProtocolVersion());
+chat.controller('mainCtrl', function($scope, chatservice) {
+	console.log(chatservice.getServiceName());
+	console.log(chatservice.getProtocolVersion());
 
-	chatService.notify("hello ango server");
+	chatservice.notify("hello ango server");
 
-	chatService.add8(100, 100).then(
+	chatservice.add8(100, 100).then(
 		function(rets){
 			console.log(rets.c);
 		},
@@ -50,7 +50,7 @@ chat.controller('mainCtrl', function($scope, chatService) {
 		b: 2,
 		add: function() {
 			console.log('do add');
-			chatService.add(parseInt($scope.calc.a), parseInt($scope.calc.b)).then(
+			chatservice.add(parseInt($scope.calc.a), parseInt($scope.calc.b)).then(
 				function(retval) {
 					$scope.calc.c = retval.c;
 				}, function(err) {

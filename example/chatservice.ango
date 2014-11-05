@@ -1,7 +1,7 @@
 name chatservice
 
 server add(a int, b int)(c int)
-// server add8(a int8, b int8)(c int16)
+server add8(a int8, b int8)(c int16)
 
 server oneway notify(text string)
 // server subtract(a int, b int)(c int)

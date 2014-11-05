@@ -6,11 +6,12 @@ package {{.PackageName}}
 import (
 	"errors"
 	"fmt"
+	"encoding/json"
+	"net/http"
+
 	"github.com/GeertJohan/go.wstext"
 	"github.com/GeertJohan/go.incremental"
 	"github.com/gorilla/websocket"
-	"encoding/json"
-	"net/http"
 )
 
 const ProtocolVersion = "{{.ProtocolVersion}}"
@@ -78,9 +79,8 @@ type angoOutError struct {
 	{{end}}
 {{end}}
 
-// {{.Service.CapitalizedName}}SessionInterface types all methods that can be called by the client
-//++ TODO: if generated code gets seperate package, rename to Session.
-type {{.Service.CapitalizedName}}SessionInterface interface {
+// SessionHandler defines all methods that can be called by the client
+type SessionHandler interface {
 	// Stop is called when the session is closing (websocket closed)
 	Stop(err error)
 
@@ -90,19 +90,18 @@ type {{.Service.CapitalizedName}}SessionInterface interface {
 	{{end}}
 }
 
-// New{{.Service.CapitalizedName}}SessionFunc must return a new instance implementing {{.Service.CapitalizedName}}SessionInterface
-//++ TODO: rename to NewSessionFunc (?) when generated code gets it's own package
-type New{{.Service.CapitalizedName}}SessionFunc func(*{{.Service.CapitalizedName}}Client)(handler {{.Service.CapitalizedName}}SessionInterface)
+// // NewSessionFunc must return a new instance implementing {{.Service.CapitalizedName}}SessionHandler
+// //++ TODO: rename to NewSessionFunc (?) when generated code gets it's own package
+// type NewSessionFunc func(*Client)(handler SessionHandler)
 
-// {{.Service.CapitalizedName}}Server handles incomming http requests
-//++ TOOD: rename to Server when generated code gets its own package
-type {{.Service.CapitalizedName}}Server struct {
-	NewSession               New{{.Service.CapitalizedName}}SessionFunc
+// Server handles incomming http requests
+type Server struct {
+	NewSession               func(*Client)(handler SessionHandler)
 	ErrorIncommingConnection func(err error)
 }
 
 // ServeHTTP hijacks incomming http connections and sets up the websocket communication
-func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 	if err != nil {
 		if _, ok := err.(websocket.HandshakeError); ok {
@@ -146,7 +145,7 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 	fmt.Println("Valid protocol version detected")
 
 	// create new client instance with conn
-	client := &{{.Service.CapitalizedName}}Client{
+	client := &Client{
 		ws:               conn,
 		callbackInc:      &incremental.Uint64{},
 		callbackChannels: make(map[uint64]chan *angoInMsg),
@@ -161,7 +160,7 @@ func (server *{{.Service.CapitalizedName}}Server) ServeHTTP(w http.ResponseWrite
 	session.Stop(err)
 }
 
-func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *{{.Service.CapitalizedName}}Client, session {{.Service.CapitalizedName}}SessionInterface) error {
+func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *Client, session SessionHandler) error {
 	for {
 		{{/* unmarshal root message structure */}}
 		inMsg := &angoInMsg{}
@@ -233,8 +232,8 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *{{.Se
 	}
 }
 
-// {{.Service.CapitalizedName}}Client is a reference to the client end-point and available methods defined on the client
-type {{.Service.CapitalizedName}}Client struct {
+// Client is a reference to the client end-point and available methods defined on the client
+type Client struct {
 	ws               *websocket.Conn
 	callbackInc      *incremental.Uint64
 	callbackChannels map[uint64]chan *angoInMsg
@@ -242,7 +241,7 @@ type {{.Service.CapitalizedName}}Client struct {
 
 {{range .Service.ClientProcedures}}
 	// {{.CapitalizedName}} is a ango procedure defined in the .ango file
-	func (c *{{$.Service.CapitalizedName}}Client) {{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} ) {
+	func (c *Client) {{.CapitalizedName}}( {{.GoArgs}} )( {{.GoRets}} ) {
 		{{if .Oneway}}
 			{{/* if service is oneway: there is no error return value. So we must create it in this block. */}}
 			var err error

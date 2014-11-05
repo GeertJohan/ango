@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/GeertJohan/go.incremental"
-	"github.com/GeertJohan/go.rice"
 	"net/http"
 	"os"
+
+	"github.com/GeertJohan/ango/example/chatservice"
+
+	"github.com/GeertJohan/go.incremental"
+	"github.com/GeertJohan/go.rice"
 )
 
 // ++ This could move to implementation of ChatService.Server (type interface) see notes below.
@@ -15,11 +18,11 @@ var idInc = &incremental.Int{}
 type ChatServiceSession struct {
 	name   string
 	id     int
-	client *ChatServiceClient
+	client *chatservice.Client
 }
 
-// NewChatServiceSession creates and returns a new ChatServiceHandler instance
-func NewChatServiceSession(client *ChatServiceClient) ChatServiceSessionInterface {
+// NewChatServiceSession creates and returns a new ServiceHandler instance
+func NewChatServiceSession(client *chatservice.Client) chatservice.SessionHandler {
 	session := &ChatServiceSession{
 		id:     idInc.Next(),
 		client: client,
@@ -29,7 +32,7 @@ func NewChatServiceSession(client *ChatServiceClient) ChatServiceSessionInterfac
 	go func() {
 		answer, err := client.AskQuestion("what's your name?")
 		if err != nil {
-			if err != ErrNotImplementedYet {
+			if err != chatservice.ErrNotImplementedYet {
 				panic("TODO: implement error handling." + err.Error())
 			}
 		}
@@ -62,10 +65,9 @@ func (cs *ChatServiceSession) Notify(text string) {
 	fmt.Printf("instance %d have notification: %s\n", cs.id, text)
 }
 
-//++ TODO: maybe create interface ChatService.Server with function NewSession.
-//++ TODO: drop ErrorIncommingConnection and have global Debug implementation for debugging.
-//++ TODO: Errors on incomming connections are not relevant during production runtime. (net/http doesn't expose those errors either..)
-var server = &ChatServiceServer{
+//++ TODO: maybe drop ErrorIncommingConnection and have global Debug implementation for debugging. (thoughts.md > hooks),
+//			Errors on incomming connections are not relevant during production runtime. (net/http doesn't expose those errors either..)
+var server = &chatservice.Server{
 	NewSession: NewChatServiceSession,
 	ErrorIncommingConnection: func(err error) {
 		fmt.Printf("Error setting up connection: %s\n", err)
@@ -80,7 +82,7 @@ func main() {
 	}
 
 	http.Handle("/", http.FileServer(httpFiles.HTTPBox()))
-	http.Handle("/websocket-ango-chatService", server)
+	http.Handle("/websocket-ango-chatservice", server)
 
 	err = http.ListenAndServe(":8123", nil)
 	if err != nil {
