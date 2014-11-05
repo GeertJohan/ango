@@ -11,10 +11,9 @@ import (
 	"github.com/GeertJohan/go.rice"
 )
 
-// ++ This could move to implementation of ChatService.Server (type interface) see notes below.
 var idInc = &incremental.Int{}
 
-// ChatServiceSession implements ChatServiceHandler
+// ChatServiceSession implements chatservice.SessionHandler
 type ChatServiceSession struct {
 	name   string
 	id     int
