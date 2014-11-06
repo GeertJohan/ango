@@ -19,7 +19,7 @@ const ProtocolVersion = "{{.ProtocolVersion}}"
 var (
 	ErrInvalidVersionString = errors.New("invalid version string")
 	ErrInvalidMessageType   = errors.New("invalid message type")
-	ErrUnkonwnProcedure     = errors.New("unknown procedure")
+	ErrUnknownProcedure     = errors.New("unknown procedure")
 	ErrNotImplementedYet    = errors.New("not implemented yet")
 	ErrInvalidCallbackID    = errors.New("callbackID is inavlid")
 )
@@ -96,7 +96,12 @@ type SessionHandler interface {
 
 // Server handles incomming http requests
 type Server struct {
+	// NewSession is called when a client connects.
+	// The given *Client provides procedures defined on the client.
+	// NewSession must return a valid SessionHandler, the methods on a SessionHandler can be called by the client javascript.
 	NewSession               func(*Client)(handler SessionHandler)
+
+	// ErrorIncommingConnection is called when an incomming connection failed to setup properly.
 	ErrorIncommingConnection func(err error)
 }
 
@@ -155,14 +160,14 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session := server.NewSession(client)
 	
 	// run protocol
-	err = run{{.Service.CapitalizedName}}Protocol(conn, client, session)
+	err = runProtocol(conn, client, session)
 	// err can be nil, but we want to call .Stop always
 	session.Stop(err)
 }
 
-func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *Client, session SessionHandler) error {
+func runProtocol(conn *websocket.Conn, client *Client, session SessionHandler) error {
 	for {
-		{{/* unmarshal root message structure */}}
+		// unmarshal root message structure
 		inMsg := &angoInMsg{}
 		err := conn.ReadJSON(inMsg)
 		if err != nil {
@@ -216,7 +221,7 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *Clien
 					{{end}}
 			{{end}}
 			default:
-				return ErrUnkonwnProcedure
+				return ErrUnknownProcedure
 			}
 		case msgTypeResponse:
 			callbackCh := client.callbackChannels[inMsg.CallbackID]
@@ -232,7 +237,7 @@ func run{{.Service.CapitalizedName}}Protocol(conn *websocket.Conn, client *Clien
 	}
 }
 
-// Client is a reference to the client end-point and available methods defined on the client
+// Client is a reference to the client connection and provides methods defined in the client's javascript.
 type Client struct {
 	ws               *websocket.Conn
 	callbackInc      *incremental.Uint64
@@ -240,8 +245,9 @@ type Client struct {
 }
 
 {{range .Service.ClientProcedures}}
-	// {{.CapitalizedName}} is a ango procedure defined in the .ango file
 	{{if .Oneway}}
+		// {{.CapitalizedName}} is a ango procedure defined in the .ango file.
+		// This is a oneway procedure, it will return immediatly after the call has been sent to the client.
 		func (c *Client) {{.CapitalizedName}}( {{.GoArgs}} )( err error ) {
 			fmt.Println("Called oneway service {{.CapitalizedName}}")
 			outMsg := angoOutMsg{
@@ -263,6 +269,7 @@ type Client struct {
 			return
 		}
 	{{else}}
+		// {{.CapitalizedName}}Result contains the return values for Client.{{.CapitalizedName}}.
 		type {{.CapitalizedName}}Result struct {
 			// Err is set when calling the procedure failed, or when the procedure returned with an error.
 			Err error
@@ -270,6 +277,10 @@ type Client struct {
 			{{range .Rets}}
 				{{.CapitalizedName}} {{.Type}}{{end}}
 		}
+
+		// {{.CapitalizedName}} is a ango procedure defined in the .ango file.
+		// A single {{.CapitalizedName}}Result will be sent on the channel returned by this method when the 
+		// procedure has finished client-side, or when an error occurred.
 		func (c *Client) {{.CapitalizedName}}( {{.GoArgs}} )( retCh <-chan *{{.CapitalizedName}}Result ) {
 			ch := make(chan *{{.CapitalizedName}}Result, 1)
 			retCh = ch
