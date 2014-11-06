@@ -99,3 +99,7 @@ func init() {
 	}
 }
 ```
+
+### Javascript procedure: return promise
+
+When a javascript procedure implementation returns a promise it will defer the callback to the promise resolve.
