@@ -9,6 +9,8 @@ type Service struct {
 	// Name is the name given to the service
 	Name string
 
+	Types map[string]*Type
+
 	// ServiceProceduers holds all server-side procedures, by their name
 	ServerProcedures map[string]*Procedure
 
@@ -18,10 +20,25 @@ type Service struct {
 
 // NewService creates a new service instance and sets up maps and defaults
 func NewService() *Service {
-	return &Service{
+	s := &Service{
+		Types:            make(map[string]*Type),
 		ServerProcedures: make(map[string]*Procedure),
 		ClientProcedures: make(map[string]*Procedure),
 	}
+	s.Types[TypeInt.Name] = TypeInt
+	s.Types[TypeInt8.Name] = TypeInt8
+	s.Types[TypeInt16.Name] = TypeInt16
+	s.Types[TypeInt32.Name] = TypeInt32
+	s.Types[TypeInt64.Name] = TypeInt64
+	s.Types[TypeUint.Name] = TypeUint
+	s.Types[TypeUint8.Name] = TypeUint8
+	s.Types[TypeUint16.Name] = TypeUint16
+	s.Types[TypeUint32.Name] = TypeUint32
+	s.Types[TypeUint64.Name] = TypeUint64
+	s.Types[TypeString.Name] = TypeString
+	s.Types[TypeBool.Name] = TypeBool
+
+	return s
 }
 
 // CapitalizedName returns the service name, capitalized.

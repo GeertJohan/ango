@@ -6,31 +6,10 @@ import (
 	"strings"
 )
 
-// ParamType is the type of a parameter
-// It's value should be a valid go TypeName (http://golang.org/ref/spec#TypeName)
-type ParamType string
-
-// ParamType's
-//++ TODO: make ParamType an int and add switch to convert to string?
-var (
-	ParamTypeInt    = ParamType("int")
-	ParamTypeInt8   = ParamType("int8")
-	ParamTypeInt16  = ParamType("int16")
-	ParamTypeInt32  = ParamType("int32")
-	ParamTypeInt64  = ParamType("int64")
-	ParamTypeUint   = ParamType("uint")
-	ParamTypeUint8  = ParamType("uint8")
-	ParamTypeUint16 = ParamType("uint16")
-	ParamTypeUint32 = ParamType("uint32")
-	ParamTypeUint64 = ParamType("uint64")
-	ParamTypeString = ParamType("string")
-	ParamTypeBool   = ParamType("bool")
-)
-
 // Param defines an argument or return parameter
 type Param struct {
 	Name string
-	Type ParamType
+	Type *Type
 }
 
 // CapitalizedName returns the name for this param, capitalized
@@ -38,81 +17,79 @@ func (p *Param) CapitalizedName() string {
 	return strings.ToUpper(p.Name[:1]) + p.Name[1:]
 }
 
-// GoTypeName returns the Go TypeName for the ParamType
+// GoTypeName returns the Go TypeName for the Type
 func (p Param) GoTypeName() string {
-	return string(p.Type)
+	return p.Type.Name
 }
 
-// JsTypeName returns the Js TypeName for the ParamType
+// JsTypeName returns the Js TypeName for the Type
 func (p Param) JsTypeName() string {
-	switch p.Type {
-	case ParamTypeString:
+	switch p.Type.Name {
+	case TypeString.Name:
 		return "string"
-	case ParamTypeBool:
+	case TypeBool.Name:
 		return "boolean"
-	case ParamTypeInt, ParamTypeInt8, ParamTypeInt16, ParamTypeInt32, ParamTypeInt64,
-		ParamTypeUint, ParamTypeUint8, ParamTypeUint16, ParamTypeUint32, ParamTypeUint64:
+	case TypeInt.Name, TypeInt8.Name, TypeInt16.Name, TypeInt32.Name, TypeInt64.Name,
+		TypeUint.Name, TypeUint8.Name, TypeUint16.Name, TypeUint32.Name, TypeUint64.Name:
 		return "number"
 	default:
-		panic("unknown ParamType value")
+		panic("unknown Type value")
 	}
 }
 
 // IsNumber returns true when the type is numeric
 func (p Param) IsNumber() bool {
-	switch p.Type {
-	case ParamTypeInt8, ParamTypeInt16, ParamTypeInt32, ParamTypeInt64, ParamTypeInt,
-		ParamTypeUint8, ParamTypeUint16, ParamTypeUint32, ParamTypeUint64, ParamTypeUint:
+	switch p.Type.Name {
+	case TypeInt.Name, TypeInt8.Name, TypeInt16.Name, TypeInt32.Name, TypeInt64.Name,
+		TypeUint.Name, TypeUint8.Name, TypeUint16.Name, TypeUint32.Name, TypeUint64.Name:
 		return true
 	default:
 		return false
 	}
 }
 
-// NumberMax returns the max number constant for the given type.
-// Or an error when the type is not a number
+// NumberMax returns the maximal numeric value for the given type or an error when the type is not a number
 func (p Param) NumberMax() (uint64, error) {
-	switch p.Type {
-	case ParamTypeInt8:
+	switch p.Type.Name {
+	case TypeInt8.Name:
 		return math.MaxInt8, nil
-	case ParamTypeInt16:
+	case TypeInt16.Name:
 		return math.MaxInt16, nil
-	case ParamTypeInt32:
+	case TypeInt32.Name:
 		return math.MaxInt32, nil
-	case ParamTypeInt64, ParamTypeInt:
+	case TypeInt64.Name, TypeInt.Name: // TODO: Int always Int64 ??
 		return math.MaxInt64, nil
-	case ParamTypeUint8:
+	case TypeUint8.Name:
 		return math.MaxUint8, nil
-	case ParamTypeUint16:
+	case TypeUint16.Name:
 		return math.MaxUint16, nil
-	case ParamTypeUint32:
+	case TypeUint32.Name:
 		return math.MaxUint32, nil
-	case ParamTypeUint64, ParamTypeUint:
+	case TypeUint64.Name, TypeUint.Name: // TODO: Uint always Uint64 ??
 		return math.MaxUint64, nil
 	default:
 		return 0, errors.New("not a number")
 	}
 }
 
-// NumberMax returns the max number constant for the given type.
-// Or an error when the type is not a number
+// NumberMin returns the minimal numeric value for the given type or an error when the type is not a number
 func (p Param) NumberMin() (int64, error) {
-	switch p.Type {
-	case ParamTypeInt8:
+	switch p.Type.Name {
+	case TypeInt8.Name:
 		return math.MinInt8, nil
-	case ParamTypeInt16:
+	case TypeInt16.Name:
 		return math.MinInt16, nil
-	case ParamTypeInt32:
+	case TypeInt32.Name:
 		return math.MinInt32, nil
-	case ParamTypeInt64, ParamTypeInt:
+	case TypeInt64.Name, TypeInt.Name: // TODO: Int always Int64 ??
 		return math.MinInt64, nil
-	case ParamTypeUint8:
+	case TypeUint8.Name:
 		return 0, nil
-	case ParamTypeUint16:
+	case TypeUint16.Name:
 		return 0, nil
-	case ParamTypeUint32:
+	case TypeUint32.Name:
 		return 0, nil
-	case ParamTypeUint64, ParamTypeUint:
+	case TypeUint64.Name, TypeUint.Name:
 		return 0, nil
 	default:
 		return 0, errors.New("not a number")

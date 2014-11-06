@@ -20,6 +20,7 @@ type Procedure struct {
 	Name   string
 	Args   Params
 	Rets   Params
+	Source Source
 }
 
 // CapitalizedName returns the name, capitalized.
