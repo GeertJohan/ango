@@ -17,11 +17,23 @@ import (
 const ProtocolVersion = "{{.ProtocolVersion}}"
 
 var (
-	ErrInvalidVersionString = errors.New("invalid version string")
+	// ErrIncompatibleVersion indicates a client tried to connect with an incompatible version.
+	ErrIncompatibleVersion = errors.New("incompatible version")
+
+	// ErrInvalidMessageType indicates an invalid message type was received.
+	//++ TODO: simplify to ErrProtocolFault
 	ErrInvalidMessageType   = errors.New("invalid message type")
+
+	// ErrUnknownProcedure indicates a call request was received for a procedure that was not defined on the server.
+	//++ TODO: simplify to ErrProtocolFault
 	ErrUnknownProcedure     = errors.New("unknown procedure")
-	ErrNotImplementedYet    = errors.New("not implemented yet")
+	
+	// ErrInvalidCallbackID indicates a message was received with an unknown callback ID.
+	//++ TODO: simplify to ErrProtocolFault
 	ErrInvalidCallbackID    = errors.New("callbackID is inavlid")
+
+	// ErrNotImplementedYet is used during development.
+	ErrNotImplementedYet    = errors.New("not implemented yet")
 )
 
 const (
@@ -32,7 +44,7 @@ const (
 // root structure for incoming message json
 type angoInMsg struct {
 	Type       string          `json:"type"`      // "req" or "res"
-	Procedure  string          `json:"procedure"` // name for the procedure 9when "req"
+	Procedure  string          `json:"procedure"` // name for the procedure when "req"
 	CallbackID uint64          `json:"cb_id"`     // callback ID for request or response
 	Data       json.RawMessage `json:"data"`      // remain raw, depends on procedure
 	Error      json.RawMessage `json:"error"`     // remain raw, depens on ??
@@ -41,7 +53,7 @@ type angoInMsg struct {
 // root structure for outgoing message json
 type angoOutMsg struct {
 	Type       string        `json:"type"`                // "req" or "res"
-	Procedure  string        `json:"procedure,omitempty"` // name for the procedure 9when "req"
+	Procedure  string        `json:"procedure,omitempty"` // name for the procedure when "req"
 	CallbackID uint64        `json:"cb_id,omitempty"`     // callback ID for request or response
 	Data       interface{}   `json:"data,omitempty"`      // remain raw, depends on procedure
 	Error      *angoOutError `json:"error,omitempty"`     // when not-nil, an error ocurred
@@ -135,7 +147,7 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("in: '%s'\n", receivedVersion)
 		fmt.Printf("hv: '%s'\n", ProtocolVersion)
 		if server.ErrorIncommingConnection != nil {
-			server.ErrorIncommingConnection(ErrInvalidVersionString)
+			server.ErrorIncommingConnection(ErrIncompatibleVersion)
 		}
 		return
 	}
@@ -237,7 +249,7 @@ func runProtocol(conn *websocket.Conn, client *Client, session SessionHandler) e
 	}
 }
 
-// Client is a reference to the client connection and provides methods defined in the client's javascript.
+// Client is a reference to the client connection and provides methods to call the client procedures.
 type Client struct {
 	ws               *websocket.Conn
 	callbackInc      *incremental.Uint64
