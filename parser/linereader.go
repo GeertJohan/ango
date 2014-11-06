@@ -6,9 +6,12 @@ import (
 	"strings"
 )
 
+// lineReader is a simple line reader with peek feature
+// not concurrent safe
 type lineReader struct {
-	ln    int
-	bufrd *bufio.Reader
+	ln      int
+	bufline *string
+	bufrd   *bufio.Reader
 }
 
 func newLineReader(rd io.Reader) *lineReader {
@@ -17,7 +20,15 @@ func newLineReader(rd io.Reader) *lineReader {
 	}
 }
 
+// Line currently skips empty lines and removes comments.
+// when the parser is more matured it should return all lines,
+// especially the comments (maybe empty lines can still be skipped here)..
 func (lr *lineReader) Line() (string, error) {
+	if lr.bufline != nil {
+		line := *lr.bufline
+		lr.bufline = nil
+		return line, nil
+	}
 	for {
 		lr.ln++
 		line, err := lr.bufrd.ReadString('\n')
@@ -36,6 +47,18 @@ func (lr *lineReader) Line() (string, error) {
 
 		return line, nil
 	}
+}
+
+func (lr *lineReader) Peek() (string, error) {
+	if lr.bufline != nil {
+		return *lr.bufline, nil
+	}
+	line, err := lr.Line()
+	if err != nil {
+		return "", err
+	}
+	lr.bufline = &line
+	return line, nil
 }
 
 func removeComments(line string) string {

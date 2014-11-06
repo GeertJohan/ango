@@ -287,7 +287,7 @@ type Client struct {
 			Err error
 
 			{{range .Rets}}
-				{{.CapitalizedName}} {{.Type}}{{end}}
+				{{.CapitalizedName}} {{.Type.Name}}{{end}}
 		}
 
 		// {{.CapitalizedName}} is a ango procedure defined in the .ango file.

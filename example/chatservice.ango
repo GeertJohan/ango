@@ -1,5 +1,7 @@
 name chatservice
 
+// type myInt int
+
 server add(a int, b int)(c int)
 server add8(a int8, b int8)(c int16)
 

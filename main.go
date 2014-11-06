@@ -54,8 +54,10 @@ func main() {
 	}
 	defer inputFile.Close()
 
-	parser.PrintParseErrors = false
-	service, err := parser.Parse(inputFile)
+	angoParser := parser.NewParser(&parser.Config{
+		PrintParseErrors: false,
+	})
+	service, err := angoParser.Parse(inputFile)
 	if err != nil {
 		fmt.Printf("Error parsing ango definitions: %s\n", err)
 		os.Exit(1)

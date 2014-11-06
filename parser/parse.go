@@ -42,14 +42,6 @@ func init() {
 	regexpParameter = regexp.MustCompile(rParamCapture)
 }
 
-var (
-	// ErrNotImlemented indicates a feature has not been implemented yet.
-	ErrNotImlemented = errors.New("not implemented")
-
-	// ErrUnexpectedEOF indicates the file had not ended yet
-	ErrUnexpectedEOF = errors.New("unexpected end of file")
-)
-
 // ParseError.Type values
 var (
 	// ParseErrInvalidNameDefinition indicates an invalid name definition
@@ -73,53 +65,73 @@ var (
 
 	// ParseErrEmptyReturnGroup indicates parenthesis for return values are given, but no actual return parameters inside them.
 	ParseErrEmptyReturnGroup = "empty return group"
+
+	// ParseErrUnexpectedEOF indicates that the parse expected more lines, but got EOF
+	ParseErrUnexpectedEOF = "unexpected EOF"
+
+	// ParseErrReader indicates there was a problem with reading the syntax
+	ParseErrReader = "reader error"
 )
 
-// Verbose, when true this package will send verbose information to stdout.
-var Verbose = false
+var (
+	// ErrNotImlemented indicates a feature has not been implemented yet.
+	ErrNotImlemented = errors.New("not implemented")
 
-func verbosef(format string, data ...interface{}) {
-	if Verbose {
+	// ErrUnexpectedEOF indicates the file had not ended yet
+	ErrUnexpectedEOF = errors.New(ParseErrUnexpectedEOF)
+)
+
+func (parser *Parser) verbosef(format string, data ...interface{}) {
+	if parser.config.Verbose {
 		fmt.Printf(format, data...)
 	}
 }
 
-// PrintParseErrors can be set to false to disable the printing of a parse error
-var PrintParseErrors = true
-
-func printParseErrorf(format string, data ...interface{}) {
-	if PrintParseErrors {
+func (parser *Parser) printParseErrorf(format string, data ...interface{}) {
+	if parser.config.PrintParseErrors {
 		fmt.Printf(format, data...)
+	}
+}
+
+type Parser struct {
+	used    bool
+	lr      *lineReader
+	config  *Config
+	service *definitions.Service
+}
+
+type Config struct {
+	Verbose          bool
+	PrintParseErrors bool
+}
+
+func NewParser(config *Config) *Parser {
+	return &Parser{
+		config: config,
 	}
 }
 
 // Parse parses an ango definition stream and returns a *Service or an error.
 // When and error occured during the parsing of a line, it is of type *ParseError.
-func Parse(rd io.Reader) (*definitions.Service, error) {
-	verbosef("do stuff with reader\n")
-
-	service := definitions.NewService()
-
-	lr := newLineReader(rd)
-
-	line, err := lr.Line()
-	if err != nil {
-		if err == io.EOF {
-			return nil, ErrUnexpectedEOF
-		}
-		return nil, err
+func (parser *Parser) Parse(rd io.Reader) (*definitions.Service, error) {
+	if parser.used {
+		return nil, errors.New("parser can be used only once right now")
 	}
+	parser.used = true
 
-	var perr *ParseError
-	service.Name, perr = findName(line)
+	// create new service definition
+	parser.service = definitions.NewService()
+
+	parser.lr = newLineReader(rd)
+
+	perr := parser.parseName()
 	if perr != nil {
-		perr.Line = lr.ln
-		printParseErrorf(perr.Error())
+		parser.printParseErrorf(perr.Error())
 		return nil, perr
 	}
 
 	for {
-		line, err := lr.Line()
+		peekLine, err := parser.lr.Peek()
 		if err != nil {
 			if err == io.EOF {
 				// end of file, parsing is completed
@@ -128,57 +140,67 @@ func Parse(rd io.Reader) (*definitions.Service, error) {
 			return nil, err
 		}
 
-		proc, perr := findProcedure(line)
-		if perr != nil {
-			perr.Line = lr.ln
-			printParseErrorf(perr.Error())
-			return nil, perr
-		}
-		var procMap map[string]*definitions.Procedure
-		switch proc.Type {
-		case definitions.ClientProcedure:
-			procMap = service.ClientProcedures
-		case definitions.ServerProcedure:
-			procMap = service.ServerProcedures
-		default:
-			panic("unreachable")
-		}
-		if _, exists := procMap[proc.Name]; exists {
-			perr := &ParseError{
-				Line:  lr.ln,
-				Type:  ParseErrDuplicateProcedureIdentifier,
-				Extra: fmt.Sprintf(`"%s"`, proc.Name),
+		if strings.HasPrefix(peekLine, "server") || strings.HasPrefix(peekLine, "client") {
+			perr := parser.parseProcedure()
+			if perr != nil {
+				parser.printParseErrorf(perr.Error())
+				return nil, perr
 			}
-			printParseErrorf(perr.Error())
-			return nil, perr
+		} else if strings.HasPrefix(peekLine, "type") {
+			perr := parser.parseType()
+			if err != nil {
+				parser.printParseErrorf(perr.Error())
+				return nil, perr
+			}
 		}
-		procMap[proc.Name] = proc
 	}
 
 	// all done
-	return service, nil
+	return parser.service, nil
 }
 
-func findName(line string) (string, *ParseError) {
+func (parser *Parser) parseName() *ParseError {
+	line, err := parser.lr.Line()
+	if err != nil {
+		if err == io.EOF {
+			return &ParseError{
+				Line: parser.lr.ln,
+				Type: ParseErrUnexpectedEOF,
+			}
+		}
+		return &ParseError{
+			Line:  parser.lr.ln,
+			Type:  ParseErrReader,
+			Extra: err.Error(),
+		}
+	}
 	matches := regexpName.FindStringSubmatch(line)
 	if len(matches) != 2 {
-		return "", &ParseError{
+		return &ParseError{
+			Line: parser.lr.ln,
 			Type: ParseErrInvalidNameDefinition,
 		}
 	}
 
-	return matches[1], nil
+	parser.service.Name = matches[1]
+
+	return nil
 }
 
-func findProcedure(line string) (*definitions.Procedure, *ParseError) {
+func (parser *Parser) parseProcedure() *ParseError {
+	line, _ := parser.lr.Line() // don't check error, previous line was peeked
 	matches := regexpProcedure.FindStringSubmatch(line)
 	if len(matches) == 0 {
-		return nil, &ParseError{
+		return &ParseError{
 			Type: ParseErrInvalidProcDefinition,
 		}
 	}
 
-	proc := &definitions.Procedure{}
+	proc := &definitions.Procedure{
+		Source: definitions.Source{
+			Linenumber: parser.lr.ln,
+		},
+	}
 	switch matches[1] {
 	case "server":
 		proc.Type = definitions.ServerProcedure
@@ -190,31 +212,50 @@ func findProcedure(line string) (*definitions.Procedure, *ParseError) {
 
 	proc.Oneway = (matches[2] == "oneway")
 	if proc.Oneway && len(matches[5]) > 0 {
-		return nil, &ParseError{
+		return &ParseError{
 			Type: ParseErrUnexpectedReturnParameters,
 		}
 	}
 
 	proc.Name = matches[3]
 
-	perr := parseParams(matches[4], &proc.Args)
+	perr := parser.parseParams(matches[4], &proc.Args)
 	if perr != nil {
-		return nil, perr
+		return perr
 	}
-	perr = parseParams(matches[5], &proc.Rets)
+	perr = parser.parseParams(matches[5], &proc.Rets)
 	if perr != nil {
-		return nil, perr
+		return perr
 	}
 	if len(matches[5]) > 0 && len(proc.Rets) == 0 {
-		return nil, &ParseError{
+		return &ParseError{
 			Type: ParseErrEmptyReturnGroup,
 		}
 	}
 
-	return proc, nil
+	var procMap map[string]*definitions.Procedure
+	switch proc.Type {
+	case definitions.ClientProcedure:
+		procMap = parser.service.ClientProcedures
+	case definitions.ServerProcedure:
+		procMap = parser.service.ServerProcedures
+	default:
+		panic("unreachable")
+	}
+	if _, exists := procMap[proc.Name]; exists {
+		perr := &ParseError{
+			Line:  parser.lr.ln,
+			Type:  ParseErrDuplicateProcedureIdentifier,
+			Extra: fmt.Sprintf(`"%s"`, proc.Name),
+		}
+		return perr
+	}
+	procMap[proc.Name] = proc
+
+	return nil
 }
 
-func parseParams(text string, list *definitions.Params) *ParseError {
+func (parser *Parser) parseParams(text string, list *definitions.Params) *ParseError {
 	if len(text) < 3 {
 		// fast return for no params or ()
 		return nil
@@ -263,27 +304,27 @@ func parseParams(text string, list *definitions.Params) *ParseError {
 		// set typed param type
 		switch tipe {
 		case "int":
-			p.Type = definitions.ParamTypeInt
+			p.Type = definitions.TypeInt
 		case "int8":
-			p.Type = definitions.ParamTypeInt8
+			p.Type = definitions.TypeInt8
 		case "int16":
-			p.Type = definitions.ParamTypeInt16
+			p.Type = definitions.TypeInt16
 		case "int32":
-			p.Type = definitions.ParamTypeInt32
+			p.Type = definitions.TypeInt32
 		case "int64":
-			p.Type = definitions.ParamTypeInt64
+			p.Type = definitions.TypeInt64
 		case "uint":
-			p.Type = definitions.ParamTypeUint
+			p.Type = definitions.TypeUint
 		case "uint8":
-			p.Type = definitions.ParamTypeUint8
+			p.Type = definitions.TypeUint8
 		case "uint16":
-			p.Type = definitions.ParamTypeUint16
+			p.Type = definitions.TypeUint16
 		case "uint32":
-			p.Type = definitions.ParamTypeUint32
+			p.Type = definitions.TypeUint32
 		case "uint64":
-			p.Type = definitions.ParamTypeUint64
+			p.Type = definitions.TypeUint64
 		case "string":
-			p.Type = definitions.ParamTypeString
+			p.Type = definitions.TypeString
 		default:
 			panic("unreachable")
 		}
@@ -292,5 +333,10 @@ func parseParams(text string, list *definitions.Params) *ParseError {
 		*list = append(*list, p)
 	}
 
+	return nil
+}
+
+func (parser *Parser) parseType() *ParseError {
+	//++
 	return nil
 }
