@@ -21,6 +21,12 @@
 			<span>{{calc.c}}</span>
 		</div>
 
+		<div ng-show="name.asked" class="nameQuestion" >
+			The server would like to know your name:
+			<input type="text" ng-model="name.answer" >
+			<button ng-click="name.send()" >Send name</button>
+		</div>
+
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.min.js" ></script>
 		<script src="chatservice.gen.js" ></script>
 		<script src="example.js" ></script>

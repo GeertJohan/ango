@@ -59,5 +59,10 @@ chat.controller('mainCtrl', function($scope, chatservice) {
 		}
 	};
 
+	$scope.name = {
+		asked: false,
+		answer: "my name",
+	};
+
 	$scope.foo = "controller is working";
 });
