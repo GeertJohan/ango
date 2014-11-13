@@ -123,3 +123,12 @@ server sequential askQuestion(question string) (answer string)
 server sequential oneway notify(message string)
 ```
 
+### type anything
+
+A type that can hold anything.
+
+For Go the type is converted to `json.RawMessage` arguments and `interface{}` results.
+
+For javascript the type isn't checked at all.
+
+The type must be compatible with Go's `encoding/json` and json in general.
