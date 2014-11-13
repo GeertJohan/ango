@@ -424,6 +424,8 @@ angular.module('ango-{{.Service.Name}}', [])
 					if(typeof({{.Name}}) != '{{.JsTypeName}}'){
 						throw new AngoException(expWrongTypeArg);
 					}
+
+					//++ TODO: move type checking to seperate functions; typeCheckInt(v), typeCheckMyType(v), typeCheckOtherType(v)
 					{{if .IsNumber}}
 						if({{.Name}} > {{.NumberMax}}) {
 							throw new AngoException(expNumberOutOfRange);

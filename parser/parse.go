@@ -3,18 +3,22 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"github.com/GeertJohan/ango/definitions"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/GeertJohan/ango/definitions"
 )
 
 // regular expression
 
 var (
-	regexpName      *regexp.Regexp
-	regexpProcedure *regexp.Regexp
-	regexpParameter *regexp.Regexp
+	regexpName       *regexp.Regexp
+	regexpProcedure  *regexp.Regexp
+	regexpParameter  *regexp.Regexp
+	regexpSimpleType *regexp.Regexp
+	regexpSliceType  *regexp.Regexp
+	regexpMapType    *regexp.Regexp
 )
 
 func init() {
@@ -40,6 +44,10 @@ func init() {
 	regexpName = regexp.MustCompile(rNameCapture)
 	regexpProcedure = regexp.MustCompile(rProcedureCapture)
 	regexpParameter = regexp.MustCompile(rParamCapture)
+
+	regexpSimpleType = regexp.MustCompile(`^` + rIdentifier + `$`)
+	regexpSliceType = regexp.MustCompile(`^\[\]` + rIdentifier + `$`)
+	regexpMapType = regexp.MustCompile(`^map\[(` + rIdentifier + `)\](` + rIdentifier + `)$`)
 }
 
 // ParseError.Type values
@@ -49,6 +57,9 @@ var (
 
 	// ParseErrInvalidProcDefinition indicates an invalid procedure definition
 	ParseErrInvalidProcDefinition = "invalid procedure definition"
+
+	// ParseErrInvalidTypeDefinition indicates an invalid type definition
+	ParseErrInvalidTypeDefinition = "invalid type definition"
 
 	// ParseErrInvalidParameter indicates an invalid parameter definition (argument or return value)
 	ParseErrInvalidParameter = "invalid parameter definition (argument or return value)"
@@ -147,7 +158,7 @@ func (parser *Parser) Parse(rd io.Reader) (*definitions.Service, error) {
 				return nil, perr
 			}
 		} else if strings.HasPrefix(peekLine, "type") {
-			perr := parser.parseType()
+			perr := parser.parseTypeDefinition()
 			if err != nil {
 				parser.printParseErrorf(perr.Error())
 				return nil, perr
@@ -336,7 +347,71 @@ func (parser *Parser) parseParams(text string, list *definitions.Params) *ParseE
 	return nil
 }
 
-func (parser *Parser) parseType() *ParseError {
-	//++
+func (parser *Parser) parseTypeDefinition() *ParseError {
+	perrInvalidTypeDefinition := &ParseError{
+		Type: ParseErrInvalidTypeDefinition,
+	}
+
+	line, _ := parser.lr.Line()
+
+	fields := strings.Fields(line)
+	if len(fields) != 3 {
+		return perrInvalidTypeDefinition
+	}
+
+	t := &definitions.Type{
+		Name: fields[1],
+	}
+
+	switch true {
+	// simple type
+	case regexpSimpleType.MatchString(fields[2]):
+		simpleTypeName := fields[2]
+		t.SimpleType = parser.service.LookupType(simpleTypeName)
+		if t.SimpleType == nil {
+			return &ParseError{
+				Type:  ParseErrInvalidTypeDefinition,
+				Extra: fmt.Sprintf("unknown type `%s`", simpleTypeName),
+			}
+		}
+
+	case regexpSliceType.MatchString(fields[2]):
+		elementTypeName := regexpSliceType.FindStringSubmatch(fields[2])[0]
+		t.SliceElementType = parser.service.LookupType(elementTypeName)
+		if t.SliceElementType == nil {
+			return &ParseError{
+				Type:  ParseErrInvalidTypeDefinition,
+				Extra: fmt.Sprintf("unknown element type `%s`", elementTypeName),
+			}
+		}
+
+	case regexpMapType.MatchString(fields[2]):
+		keyValueTypeName := regexpMapType.FindStringSubmatch(fields[2])
+		t.MapKeyType = parser.service.LookupType(keyValueTypeName[0])
+		if t.MapKeyType == nil {
+			return &ParseError{
+				Type:  ParseErrInvalidTypeDefinition,
+				Extra: fmt.Sprintf("unknown map key type `%s`", keyValueTypeName[0]),
+			}
+		}
+		t.MapValueType = parser.service.LookupType(keyValueTypeName[1])
+		if t.MapValueType == nil {
+			return &ParseError{
+				Type:  ParseErrInvalidTypeDefinition,
+				Extra: fmt.Sprintf("unknown map value type `%s`", keyValueTypeName[1]),
+			}
+		}
+
+	case fields[3] == "struct{":
+		//++ struct
+		//++ parse field lines until `}`
+		panic(ErrNotImlemented)
+
+	default:
+		// unknown/invalid type definition
+		return perrInvalidTypeDefinition
+	}
+
+	parser.service.Types[t.Name] = t
 	return nil
 }

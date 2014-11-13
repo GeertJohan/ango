@@ -6,7 +6,7 @@ type TypeCategory int
 
 const (
 	// Builtin types (int, int8, string, bool, etc)
-	Builtin = TypeCategory(iota)
+	Builtin = TypeCategory(iota + 1)
 
 	// Simple types. eg: `type myInt int`
 	Simple
@@ -33,6 +33,9 @@ type Type struct {
 	// Source tells where the given type was declared
 	Source Source
 
+	// SimpleType defines the type for the type that this type maps to
+	SimpleType *Type
+
 	// SliceElementType defines the type for the slice elements
 	SliceElementType *Type
 
@@ -52,16 +55,30 @@ type StructField struct {
 
 // Builtin types
 var (
-	TypeInt    = &Type{Name: "int"}
-	TypeInt8   = &Type{Name: "int8"}
-	TypeInt16  = &Type{Name: "int16"}
-	TypeInt32  = &Type{Name: "int32"}
-	TypeInt64  = &Type{Name: "int64"}
-	TypeUint   = &Type{Name: "uint"}
-	TypeUint8  = &Type{Name: "uint8"}
-	TypeUint16 = &Type{Name: "uint16"}
-	TypeUint32 = &Type{Name: "uint32"}
-	TypeUint64 = &Type{Name: "uint64"}
-	TypeString = &Type{Name: "string"}
-	TypeBool   = &Type{Name: "bool"}
+	TypeInt      = &Type{Name: "int", Category: Builtin}
+	TypeInt8     = &Type{Name: "int8", Category: Builtin}
+	TypeInt16    = &Type{Name: "int16", Category: Builtin}
+	TypeInt32    = &Type{Name: "int32", Category: Builtin}
+	TypeInt64    = &Type{Name: "int64", Category: Builtin}
+	TypeUint     = &Type{Name: "uint", Category: Builtin}
+	TypeUint8    = &Type{Name: "uint8", Category: Builtin}
+	TypeUint16   = &Type{Name: "uint16", Category: Builtin}
+	TypeUint32   = &Type{Name: "uint32", Category: Builtin}
+	TypeUint64   = &Type{Name: "uint64", Category: Builtin}
+	TypeString   = &Type{Name: "string", Category: Builtin}
+	TypeBool     = &Type{Name: "bool", Category: Builtin}
+	BuiltinTypes = map[string]*Type{
+		TypeInt.Name:    TypeInt,
+		TypeInt8.Name:   TypeInt8,
+		TypeInt16.Name:  TypeInt16,
+		TypeInt32.Name:  TypeInt32,
+		TypeInt64.Name:  TypeInt64,
+		TypeUint.Name:   TypeUint,
+		TypeUint8.Name:  TypeUint8,
+		TypeUint16.Name: TypeUint16,
+		TypeUint32.Name: TypeUint32,
+		TypeUint64.Name: TypeUint64,
+		TypeString.Name: TypeString,
+		TypeBool.Name:   TypeBool,
+	}
 )
