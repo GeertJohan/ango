@@ -24,8 +24,7 @@ What I don't want to do (not goals):
 
 I chose to create a tool that generates Go and Angular/javascript without external dependencies, so the generated server and client code contain all information to communicate.
 
-~~Code generated for Go can be copied into any go package. The code doesn't form a package itself.~~
-NEEDS THINKING: this has drawbacks on the generated code (need to use scope to hide inner variables from the rest of package).
+Generated Go code is a self-contained package without external imports. The generated code/package is to be imported by the application implementing/using the ango service.
 
 For the client side a single `.js` file is generated containing an angular module. The module can be included by any other angular module.
 
