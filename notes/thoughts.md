@@ -103,3 +103,15 @@ func init() {
 ### Javascript procedure: return promise
 
 When a javascript procedure implementation returns a promise it will defer the callback to the promise resolve.
+
+### Javascript procedure: deferred implementation
+
+A javascript procedure handler can't always be set during the AngularJS config phase. There should be an option to defer setting the handler until a later moment. Incomming calls will be buffered and played back when the handler is set. Maybe do something like:
+```
+chatserviceProvider.setHandlers({
+	askQuestion: 'defer', 
+});
+```
+
+There could be multiple options, e.g.: 'defer' and 'defer-sync'. 'defer' will let ango make all buffered calls directly when the handler is set (all at once), whereas 'defer-sync' will play the calls one by one (in received order). So when 2 calls were buffered, it will only make the second call when the first returned.
+
