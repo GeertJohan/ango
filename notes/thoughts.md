@@ -113,5 +113,13 @@ chatserviceProvider.setHandlers({
 });
 ```
 
-There could be multiple options, e.g.: 'defer' and 'defer-sync'. 'defer' will let ango make all buffered calls directly when the handler is set (all at once), whereas 'defer-sync' will play the calls one by one (in received order). So when 2 calls were buffered, it will only make the second call when the first returned.
+There could be multiple options, e.g.: 'defer' and 'defer-sync'. 'defer' will let ango make all buffered calls directly when the handler is set (all at once), whereas 'defer-sync' will play the calls one by one (in received order). So when 2 calls were buffered, it will only make the second call when the first returned. See idea below about buffered calls..
+
+### Buffering of calls or: sequential procedures
+
+Above is described how several buffered calls to a handler that was not yet configured will be called all at once when it is set, or one by one (sequential). Maybe this behaviour should be configured in the ango definition file, and it could work for both server and client: buffered procedures. A sequential procedure will handle only one call at once. 'sequential' could be a keyword. e.g.:
+```
+server sequential askQuestion(question string) (answer string)
+server sequential oneway notify(message string)
+```
 
