@@ -23,6 +23,7 @@ func newLineReader(rd io.Reader) *lineReader {
 // Line currently skips empty lines and removes comments.
 // when the parser is more matured it should return all lines,
 // especially the comments (maybe empty lines can still be skipped here)..
+// OR instead: have a method "RelatedComment()" that returns a string containing a comment related to the current line.
 func (lr *lineReader) Line() (string, error) {
 	if lr.bufline != nil {
 		line := *lr.bufline
