@@ -13,12 +13,13 @@ import (
 // regular expression
 
 var (
-	regexpName       *regexp.Regexp
-	regexpProcedure  *regexp.Regexp
-	regexpParameter  *regexp.Regexp
-	regexpSimpleType *regexp.Regexp
-	regexpSliceType  *regexp.Regexp
-	regexpMapType    *regexp.Regexp
+	regexpName            *regexp.Regexp
+	regexpProcedure       *regexp.Regexp
+	regexpParameter       *regexp.Regexp
+	regexpSimpleType      *regexp.Regexp
+	regexpSliceType       *regexp.Regexp
+	regexpMapType         *regexp.Regexp
+	regexpStructFieldType *regexp.Regexp
 )
 
 func init() {
@@ -48,6 +49,7 @@ func init() {
 	regexpSimpleType = regexp.MustCompile(`^` + rIdentifier + `$`)
 	regexpSliceType = regexp.MustCompile(`^\[\]` + rIdentifier + `$`)
 	regexpMapType = regexp.MustCompile(`^map\[(` + rIdentifier + `)\](` + rIdentifier + `)$`)
+	regexpStructFieldType = regexp.MustCompile(`^(` + rIdentifier + `)` + rMustWhitespace + `(` + rIdentifier + `)$`)
 }
 
 // ParseError.Type values
@@ -60,6 +62,9 @@ var (
 
 	// ParseErrInvalidTypeDefinition indicates an invalid type definition
 	ParseErrInvalidTypeDefinition = "invalid type definition"
+
+	// ParseErrInvalidStructFieldDefinition indicates an invalid struct field definition
+	ParseErrInvalidStructFieldDefinition = "invalid struct field definition"
 
 	// ParseErrInvalidParameter indicates an invalid parameter definition (argument or return value)
 	ParseErrInvalidParameter = "invalid parameter definition (argument or return value)"
@@ -374,6 +379,7 @@ func (parser *Parser) parseTypeDefinition() *ParseError {
 				Extra: fmt.Sprintf("unknown type `%s`", simpleTypeName),
 			}
 		}
+		t.Category = definitions.Simple
 
 	case regexpSliceType.MatchString(fields[2]):
 		elementTypeName := regexpSliceType.FindStringSubmatch(fields[2])[0]
@@ -384,6 +390,7 @@ func (parser *Parser) parseTypeDefinition() *ParseError {
 				Extra: fmt.Sprintf("unknown element type `%s`", elementTypeName),
 			}
 		}
+		t.Category = definitions.Slice
 
 	case regexpMapType.MatchString(fields[2]):
 		keyValueTypeName := regexpMapType.FindStringSubmatch(fields[2])
@@ -401,11 +408,39 @@ func (parser *Parser) parseTypeDefinition() *ParseError {
 				Extra: fmt.Sprintf("unknown map value type `%s`", keyValueTypeName[1]),
 			}
 		}
+		t.Category = definitions.Map
 
-	case fields[3] == "struct{":
-		//++ struct
-		//++ parse field lines until `}`
-		panic(ErrNotImlemented)
+	case fields[2] == "struct{":
+		for {
+			structLine, err := parser.lr.Line()
+			if err != nil {
+				return &ParseError{
+					Type:  ParseErrUnexpectedEOF,
+					Extra: fmt.Sprintf("unexpected EOF when parsing struct type `%s`", t.Name),
+				}
+			}
+			if structLine == "}" {
+				t.Category = definitions.Struct
+				break
+			}
+			fieldFields := regexpStructFieldType.FindStringSubmatch(structLine)
+			if len(fieldFields) != 2 || len(fieldFields[0]) == 0 || len(fieldFields[1]) == 0 {
+				return &ParseError{
+					Type: ParseErrInvalidStructFieldDefinition,
+				}
+			}
+			sf := definitions.StructField{
+				Name: fieldFields[0],
+				Type: parser.service.LookupType(fieldFields[1]),
+			}
+			if sf.Type == nil {
+				return &ParseError{
+					Type:  ParseErrInvalidTypeDefinition,
+					Extra: fmt.Sprintf("unknown field type `%s`", fieldFields[1]),
+				}
+			}
+			t.StructFields = append(t.StructFields, sf)
+		}
 
 	default:
 		// unknown/invalid type definition

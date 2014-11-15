@@ -2,6 +2,13 @@ name chatservice
 
 type myInt int
 
+type myMyInt myInt
+
+type foo struct{
+	bar int
+	barbar int
+}
+
 server add(a int, b int)(c int)
 server add8(a int8, b int8)(c int16)
 
