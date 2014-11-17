@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/GeertJohan/ango/parser"
 	goflags "github.com/jessevdk/go-flags"
-	"os"
-	"strings"
 )
 
 var flagsParser *goflags.Parser
@@ -26,7 +28,7 @@ var (
 )
 
 func main() {
-	fmt.Printf("ango version %s\n", versionFull())
+	verbosef("ango version %s\n", versionFull())
 
 	var err error
 	flagsParser := goflags.NewParser(&flags, goflags.Default)
@@ -54,6 +56,7 @@ func main() {
 	}
 	defer inputFile.Close()
 
+	verbosef("Parsing %s.\n", flags.InputFile)
 	angoParser := parser.NewParser(&parser.Config{
 		PrintParseErrors: false,
 	})
@@ -62,9 +65,10 @@ func main() {
 		fmt.Printf("Error parsing ango definitions: %s\n", err)
 		os.Exit(1)
 	}
-	if service.Name != strings.TrimSuffix(flags.InputFile, ".ango") {
+	if service.Name != strings.TrimSuffix(filepath.Base(flags.InputFile), ".ango") {
 		fmt.Println("Warning: .ango filename doesn't match name clause in file.")
 	}
+	verbosef("File %s parsed.", flags.InputFile)
 
 	protocolVersion := calculateVersion(service)
 	verbosef("Calculated protocol version is: %s\n", protocolVersion)

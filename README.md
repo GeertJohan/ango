@@ -68,7 +68,7 @@ Some other directories exist:
  - `ango/tools/publish` contains a tool ran by drone.io to build and preserve standalone binaries (linked in the download section below).
 
 ### TODO
-There's still lots of things to do. If you wish to help out, please contact me.
+There are still lots of things to do. Check out the [issues](https://github.com/GeertJohan/ango/issues) list. Please contact me if you would like to contribute.
 
 ### Download
 At this time, automated builds are only available for linux_amd64. Download [release](https://drone.io/github.com/GeertJohan/ango/files/ango-release) for production. Or get the [latest](https://drone.io/github.com/GeertJohan/ango/files/ango-latest) build (nightly).

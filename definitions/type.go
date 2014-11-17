@@ -30,9 +30,6 @@ type Type struct {
 	// Category indicates the Type's category (builtin, simple, slice, map, struct)
 	Category TypeCategory
 
-	// Source tells where the given type was declared
-	Source Source
-
 	// SimpleType defines the type for the type that this type maps to
 	SimpleType *Type
 

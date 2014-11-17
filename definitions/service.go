@@ -9,6 +9,7 @@ type Service struct {
 	// Name is the name given to the service
 	Name string
 
+	// Types defined on the service
 	Types map[string]*Type
 
 	// ServiceProceduers holds all server-side procedures, by their name

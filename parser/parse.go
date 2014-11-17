@@ -54,8 +54,8 @@ func init() {
 
 // ParseError.Type values
 var (
-	// ParseErrInvalidNameDefinition indicates an invalid name definition
-	ParseErrInvalidNameDefinition = "invalid name definition"
+	// ParseErrInvalidNameDefinition indicates an invalid name clause
+	ParseErrInvalidNameClause = "invalid name clause"
 
 	// ParseErrInvalidProcDefinition indicates an invalid procedure definition
 	ParseErrInvalidProcDefinition = "invalid procedure definition"
@@ -65,6 +65,9 @@ var (
 
 	// ParseErrInvalidStructFieldDefinition indicates an invalid struct field definition
 	ParseErrInvalidStructFieldDefinition = "invalid struct field definition"
+
+	// ParseErrInvalidDefinition indicates an invalid statement
+	ParseErrInvalidStatement = "invalid statement"
 
 	// ParseErrInvalidParameter indicates an invalid parameter definition (argument or return value)
 	ParseErrInvalidParameter = "invalid parameter definition (argument or return value)"
@@ -156,18 +159,26 @@ func (parser *Parser) Parse(rd io.Reader) (*definitions.Service, error) {
 			return nil, err
 		}
 
-		if strings.HasPrefix(peekLine, "server") || strings.HasPrefix(peekLine, "client") {
+		switch {
+		case strings.HasPrefix(peekLine, "server") || strings.HasPrefix(peekLine, "client"):
 			perr := parser.parseProcedure()
 			if perr != nil {
 				parser.printParseErrorf(perr.Error())
 				return nil, perr
 			}
-		} else if strings.HasPrefix(peekLine, "type") {
+		case strings.HasPrefix(peekLine, "type"):
 			perr := parser.parseTypeDefinition()
-			if err != nil {
+			if perr != nil {
 				parser.printParseErrorf(perr.Error())
 				return nil, perr
 			}
+		default:
+			perr := &ParseError{
+				Type: ParseErrInvalidStatement,
+				Line: parser.lr.ln,
+			}
+			parser.printParseErrorf(perr.Error())
+			return nil, perr
 		}
 	}
 
@@ -194,7 +205,7 @@ func (parser *Parser) parseName() *ParseError {
 	if len(matches) != 2 {
 		return &ParseError{
 			Line: parser.lr.ln,
-			Type: ParseErrInvalidNameDefinition,
+			Type: ParseErrInvalidNameClause,
 		}
 	}
 
@@ -353,100 +364,80 @@ func (parser *Parser) parseParams(text string, list *definitions.Params) *ParseE
 }
 
 func (parser *Parser) parseTypeDefinition() *ParseError {
-	perrInvalidTypeDefinition := &ParseError{
-		Type: ParseErrInvalidTypeDefinition,
-	}
 
 	line, _ := parser.lr.Line()
 
 	fields := strings.Fields(line)
-	if len(fields) != 3 {
-		return perrInvalidTypeDefinition
-	}
 
+	if len(fields) < 2 {
+		return parser.newError(ParseErrInvalidTypeDefinition)
+	}
 	t := &definitions.Type{
 		Name: fields[1],
 	}
 
-	switch true {
+	switch {
 	// simple type
-	case regexpSimpleType.MatchString(fields[2]):
+	case len(fields) == 3 && regexpSimpleType.MatchString(fields[2]):
 		simpleTypeName := fields[2]
 		t.SimpleType = parser.service.LookupType(simpleTypeName)
 		if t.SimpleType == nil {
-			return &ParseError{
-				Type:  ParseErrInvalidTypeDefinition,
-				Extra: fmt.Sprintf("unknown type `%s`", simpleTypeName),
-			}
+			return parser.newErrorExtra(ParseErrInvalidTypeDefinition, "unknown type `%s`", simpleTypeName)
 		}
 		t.Category = definitions.Simple
 
-	case regexpSliceType.MatchString(fields[2]):
-		elementTypeName := regexpSliceType.FindStringSubmatch(fields[2])[0]
+	case len(fields) == 3 && regexpSliceType.MatchString(fields[2]):
+		elementTypeName := fields[2][2:]
 		t.SliceElementType = parser.service.LookupType(elementTypeName)
 		if t.SliceElementType == nil {
-			return &ParseError{
-				Type:  ParseErrInvalidTypeDefinition,
-				Extra: fmt.Sprintf("unknown element type `%s`", elementTypeName),
-			}
+			return parser.newErrorExtra(ParseErrInvalidTypeDefinition, "unknown element type `%s`", elementTypeName)
 		}
 		t.Category = definitions.Slice
 
-	case regexpMapType.MatchString(fields[2]):
+	case len(fields) == 3 && regexpMapType.MatchString(fields[2]):
 		keyValueTypeName := regexpMapType.FindStringSubmatch(fields[2])
-		t.MapKeyType = parser.service.LookupType(keyValueTypeName[0])
-		if t.MapKeyType == nil {
-			return &ParseError{
-				Type:  ParseErrInvalidTypeDefinition,
-				Extra: fmt.Sprintf("unknown map key type `%s`", keyValueTypeName[0]),
-			}
+		if len(keyValueTypeName) != 3 {
+			return parser.newError(ParseErrInvalidTypeDefinition)
 		}
-		t.MapValueType = parser.service.LookupType(keyValueTypeName[1])
+		t.MapKeyType = parser.service.LookupType(keyValueTypeName[1])
+		if t.MapKeyType == nil {
+			return parser.newErrorExtra(ParseErrInvalidTypeDefinition, "unknown map key type `%s`", keyValueTypeName[0])
+		}
+		t.MapValueType = parser.service.LookupType(keyValueTypeName[2])
 		if t.MapValueType == nil {
-			return &ParseError{
-				Type:  ParseErrInvalidTypeDefinition,
-				Extra: fmt.Sprintf("unknown map value type `%s`", keyValueTypeName[1]),
-			}
+			return parser.newErrorExtra(ParseErrInvalidTypeDefinition, "unknown map value type `%s`", keyValueTypeName[1])
 		}
 		t.Category = definitions.Map
 
-	case fields[2] == "struct{":
+	case len(fields) == 3 && fields[2] == "struct{",
+		len(fields) == 4 && fields[2] == "struct" && fields[3] == "{":
 		for {
 			structLine, err := parser.lr.Line()
 			if err != nil {
-				return &ParseError{
-					Type:  ParseErrUnexpectedEOF,
-					Extra: fmt.Sprintf("unexpected EOF when parsing struct type `%s`", t.Name),
-				}
+				return parser.newErrorExtra(ParseErrUnexpectedEOF, "unexpected EOF when parsing struct type `%s`", t.Name)
 			}
 			if structLine == "}" {
 				t.Category = definitions.Struct
 				break
 			}
 			fieldFields := regexpStructFieldType.FindStringSubmatch(structLine)
-			if len(fieldFields) != 2 || len(fieldFields[0]) == 0 || len(fieldFields[1]) == 0 {
-				return &ParseError{
-					Type: ParseErrInvalidStructFieldDefinition,
-				}
+			if len(fieldFields) != 3 || len(fieldFields[1]) == 0 || len(fieldFields[2]) == 0 {
+				return parser.newError(ParseErrInvalidStructFieldDefinition)
 			}
 			sf := definitions.StructField{
-				Name: fieldFields[0],
-				Type: parser.service.LookupType(fieldFields[1]),
+				Name: fieldFields[1],
+				Type: parser.service.LookupType(fieldFields[2]),
 			}
 			if sf.Type == nil {
-				return &ParseError{
-					Type:  ParseErrInvalidTypeDefinition,
-					Extra: fmt.Sprintf("unknown field type `%s`", fieldFields[1]),
-				}
+				return parser.newErrorExtra(ParseErrInvalidTypeDefinition, "unknown field type `%s`", fieldFields[2])
 			}
 			t.StructFields = append(t.StructFields, sf)
 		}
 
 	default:
 		// unknown/invalid type definition
-		return perrInvalidTypeDefinition
+		return parser.newError(ParseErrInvalidTypeDefinition)
 	}
-
 	parser.service.Types[t.Name] = t
 	return nil
 }

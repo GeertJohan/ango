@@ -4,10 +4,15 @@ type myInt int
 
 type myMyInt myInt
 
-type foo struct{
+type foo struct {
 	bar int
 	barbar int
+	// map map[string]int // this is currenctly not supported
 }
+
+type mySlice []foo
+
+type myMap map[string]int
 
 server add(a int, b int)(c int)
 server add8(a int8, b int8)(c int16)
