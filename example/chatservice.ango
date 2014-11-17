@@ -7,7 +7,10 @@ type myMyInt myInt
 type foo struct {
 	bar int
 	barbar int
-	// map map[string]int // this is currenctly not supported
+	map []myMyInt // this is currenctly not supported
+	str struct {
+		subfield int
+	}
 }
 
 type mySlice []foo
