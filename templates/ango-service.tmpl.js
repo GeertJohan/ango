@@ -198,8 +198,7 @@ angular.module('ango-{{.Service.Name}}', [])
 				if(debug) {
 					console.error("Error on websocket: ", err)
 				}
-
-				// run onError listeners
+				// run onWsError listeners
 				runEvent.onWsError(err);
 			}
 
@@ -207,10 +206,8 @@ angular.module('ango-{{.Service.Name}}', [])
 				if(debug) {
 					console.error("ango websocket closed");
 				}
-
-				// run onClose listeners
+				// run onWsClose listeners
 				runEvent.onWsClose();
-				console.log('done');
 			}
 
 			// getCallbackID creates a new callback ID for a request
