@@ -68,7 +68,7 @@ func main() {
 	if service.Name != strings.TrimSuffix(filepath.Base(flags.InputFile), ".ango") {
 		fmt.Println("Warning: .ango filename doesn't match name clause in file.")
 	}
-	verbosef("File %s parsed.", flags.InputFile)
+	verbosef("File %s parsed.\n", flags.InputFile)
 
 	protocolVersion := calculateVersion(service)
 	verbosef("Calculated protocol version is: %s\n", protocolVersion)

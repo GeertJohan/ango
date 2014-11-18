@@ -25,9 +25,9 @@ var (
 func init() {
 	var (
 		// partials
-		rIdentifier     = `[a-z][a-zA-Z0-9]*`
-		rBits           = `(?:8|16|32|64)`
-		rTypes          = `(?:int` + rBits + `?|uint` + rBits + `?|string)`
+		rIdentifier = `[a-zA-Z][a-zA-Z0-9]*`
+		// rBits       = `(?:8|16|32|64)`
+		// rBuiltinTypes   = `(?:int` + rBits + `?|uint` + rBits + `?|string)` //TODO: not used anymore since we have custom types added
 		rMustWhitespace = `[ \t]+`
 		rOptWhitepsace  = `[ \t]*`
 
@@ -35,12 +35,12 @@ func init() {
 		rNameCapture = `^name` + rMustWhitespace + `(` + rIdentifier + `)$`
 
 		// used to capture procedure definition (and partials)
-		rParam            = rOptWhitepsace + rIdentifier + rMustWhitespace + rTypes + rOptWhitepsace
+		rParam            = rOptWhitepsace + rIdentifier + rMustWhitespace + rIdentifier + rOptWhitepsace
 		rParameters       = `\((?:` + rParam + `)?(?:,` + rParam + `)*\)`
 		rProcedureCapture = `^(server|client)` + rMustWhitespace + `(?:(oneway)` + rMustWhitespace + `)?(` + rIdentifier + `)` + rOptWhitepsace + `(` + rParameters + `)` + rOptWhitepsace + `((?:` + rParameters + `)?)` + rOptWhitepsace + `$`
 
 		// used to capture parameters
-		rParamCapture = rOptWhitepsace + `(` + rIdentifier + `)` + rMustWhitespace + `(` + rTypes + `)` + rOptWhitepsace
+		rParamCapture = rOptWhitepsace + `(` + rIdentifier + `)` + rMustWhitespace + `(` + rIdentifier + `)` + rOptWhitepsace
 	)
 	regexpName = regexp.MustCompile(rNameCapture)
 	regexpProcedure = regexp.MustCompile(rProcedureCapture)
@@ -176,10 +176,7 @@ func (parser *Parser) Parse(rd io.Reader) (*definitions.Service, error) {
 				return nil, perr
 			}
 		default:
-			perr := &ParseError{
-				Type: ParseErrInvalidStatement,
-				Line: parser.lr.ln,
-			}
+			perr := parser.newError(ParseErrInvalidStatement)
 			parser.printParseErrorf(perr.Error())
 			return nil, perr
 		}
@@ -193,23 +190,13 @@ func (parser *Parser) parseName() *ParseError {
 	line, err := parser.lr.Line()
 	if err != nil {
 		if err == io.EOF {
-			return &ParseError{
-				Line: parser.lr.ln,
-				Type: ParseErrUnexpectedEOF,
-			}
+			return parser.newError(ParseErrUnexpectedEOF)
 		}
-		return &ParseError{
-			Line:  parser.lr.ln,
-			Type:  ParseErrReader,
-			Extra: err.Error(),
-		}
+		return parser.newErrorExtra(ParseErrReader, err.Error())
 	}
 	matches := regexpName.FindStringSubmatch(line)
 	if len(matches) != 2 {
-		return &ParseError{
-			Line: parser.lr.ln,
-			Type: ParseErrInvalidNameClause,
-		}
+		return parser.newError(ParseErrInvalidNameClause)
 	}
 
 	parser.service.Name = matches[1]
@@ -221,9 +208,7 @@ func (parser *Parser) parseProcedure() *ParseError {
 	line, _ := parser.lr.Line() // don't check error, previous line was peeked
 	matches := regexpProcedure.FindStringSubmatch(line)
 	if len(matches) == 0 {
-		return &ParseError{
-			Type: ParseErrInvalidProcDefinition,
-		}
+		return parser.newError(ParseErrInvalidProcDefinition)
 	}
 
 	proc := &definitions.Procedure{
@@ -242,9 +227,7 @@ func (parser *Parser) parseProcedure() *ParseError {
 
 	proc.Oneway = (matches[2] == "oneway")
 	if proc.Oneway && len(matches[5]) > 0 {
-		return &ParseError{
-			Type: ParseErrUnexpectedReturnParameters,
-		}
+		return parser.newError(ParseErrUnexpectedReturnParameters)
 	}
 
 	proc.Name = matches[3]
@@ -258,9 +241,7 @@ func (parser *Parser) parseProcedure() *ParseError {
 		return perr
 	}
 	if len(matches[5]) > 0 && len(proc.Rets) == 0 {
-		return &ParseError{
-			Type: ParseErrEmptyReturnGroup,
-		}
+		return parser.newError(ParseErrEmptyReturnGroup)
 	}
 
 	var procMap map[string]*definitions.Procedure
@@ -273,12 +254,7 @@ func (parser *Parser) parseProcedure() *ParseError {
 		panic("unreachable")
 	}
 	if _, exists := procMap[proc.Name]; exists {
-		perr := &ParseError{
-			Line:  parser.lr.ln,
-			Type:  ParseErrDuplicateProcedureIdentifier,
-			Extra: fmt.Sprintf(`"%s"`, proc.Name),
-		}
-		return perr
+		return parser.newErrorExtra(ParseErrDuplicateProcedureIdentifier, `"%s"`, proc.Name)
 	}
 	procMap[proc.Name] = proc
 
@@ -308,10 +284,7 @@ func (parser *Parser) parseParams(text string, list *definitions.Params) *ParseE
 		// find match and verify
 		matches := regexpParameter.FindStringSubmatch(paramString)
 		if len(matches) != 3 {
-			return &ParseError{
-				Type:  ParseErrInvalidParameter,
-				Extra: fmt.Sprintf(`at position %d: "%s"`, i+1, paramString),
-			}
+			return parser.newErrorExtra(ParseErrInvalidParameter, `at position %d: "%s"`, i+1, paramString)
 		}
 
 		// get name and type
@@ -320,43 +293,17 @@ func (parser *Parser) parseParams(text string, list *definitions.Params) *ParseE
 
 		// check if name (identifier) is taken
 		if taken[name] {
-			return &ParseError{
-				Type:  ParseErrDuplicateParameterIdentifier,
-				Extra: fmt.Sprintf(`at position %d: "%s"`, i+1, name),
-			}
+			return parser.newErrorExtra(ParseErrDuplicateParameterIdentifier, `at position %d: "%s"`, i+1, name)
 		}
 		taken[name] = true
 
 		// create new param
 		p := &definitions.Param{
 			Name: name,
+			Type: parser.service.LookupType(tipe),
 		}
-		// set typed param type
-		switch tipe {
-		case "int":
-			p.Type = definitions.TypeInt
-		case "int8":
-			p.Type = definitions.TypeInt8
-		case "int16":
-			p.Type = definitions.TypeInt16
-		case "int32":
-			p.Type = definitions.TypeInt32
-		case "int64":
-			p.Type = definitions.TypeInt64
-		case "uint":
-			p.Type = definitions.TypeUint
-		case "uint8":
-			p.Type = definitions.TypeUint8
-		case "uint16":
-			p.Type = definitions.TypeUint16
-		case "uint32":
-			p.Type = definitions.TypeUint32
-		case "uint64":
-			p.Type = definitions.TypeUint64
-		case "string":
-			p.Type = definitions.TypeString
-		default:
-			panic("unreachable")
+		if p.Type == nil {
+			return parser.newErrorExtra(ParseErrMissingType, `at position %d: "%s"`, i+1, name)
 		}
 
 		// append param to params slice on procedure

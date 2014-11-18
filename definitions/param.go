@@ -17,11 +17,12 @@ func (p *Param) CapitalizedName() string {
 	return strings.ToUpper(p.Name[:1]) + p.Name[1:]
 }
 
-// GoTypeName returns the Go TypeName for the Type
-func (p Param) GoTypeName() string {
-	return p.Type.Name
-}
+// // GoTypeName returns the Go TypeName for the Type
+// func (p Param) GoTypeName() string {
+// 	return p.Type.Name
+// }
 
+// TODO: move method to (t *Type)
 // JsTypeName returns the Js TypeName for the Type
 func (p Param) JsTypeName() string {
 	switch p.Type.Name {
@@ -33,10 +34,11 @@ func (p Param) JsTypeName() string {
 		TypeUint.Name, TypeUint8.Name, TypeUint16.Name, TypeUint32.Name, TypeUint64.Name:
 		return "number"
 	default:
-		panic("unknown Type value")
+		return "custom" + p.Type.CapitalizedName()
 	}
 }
 
+// TODO: move method to (t *Type)
 // IsNumber returns true when the type is numeric
 func (p Param) IsNumber() bool {
 	switch p.Type.Name {
@@ -48,6 +50,7 @@ func (p Param) IsNumber() bool {
 	}
 }
 
+// TODO: move method to (t *Type)
 // NumberMax returns the maximal numeric value for the given type or an error when the type is not a number
 func (p Param) NumberMax() (uint64, error) {
 	switch p.Type.Name {
@@ -72,6 +75,7 @@ func (p Param) NumberMax() (uint64, error) {
 	}
 }
 
+// TODO: move method to (t *Type)
 // NumberMin returns the minimal numeric value for the given type or an error when the type is not a number
 func (p Param) NumberMin() (int64, error) {
 	switch p.Type.Name {
@@ -112,7 +116,7 @@ func (ps Params) JsParameterList() string {
 func (ps Params) GoParameterList() string {
 	params := make([]string, 0, len(ps))
 	for _, p := range ps {
-		params = append(params, p.Name+" "+p.GoTypeName())
+		params = append(params, p.Name+" "+p.Type.GoTypeName())
 	}
 	return strings.Join(params, ", ")
 }

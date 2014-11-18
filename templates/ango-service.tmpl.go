@@ -64,15 +64,19 @@ type angoOutError struct {
 	Message string `json:"message"`
 }
 
+{{range .Service.Types}}
+	type {{.CapitalizedName}} {{.GoType}}
+{{end}}
+
 {{range .Service.ServerProcedures}}
 	type angoServerArgsData{{.CapitalizedName}} struct {
 		{{range .Args}}
-			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+			{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
 	}
 	{{if not .Oneway}}
 		type angoServerRetsData{{.CapitalizedName}} struct {
 			{{range .Rets}}
-				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+				{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
 		}
 	{{end}}
 {{end}}
@@ -81,12 +85,12 @@ type angoOutError struct {
 {{range .Service.ClientProcedures}}
 	type angoClientArgsData{{.CapitalizedName}} struct {
 		{{range .Args}}
-			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+			{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
 	}
 	{{if not .Oneway}}
 		type angoClientRetsData{{.CapitalizedName}} struct {
 			{{range .Rets}}
-				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
+				{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
 		}
 	{{end}}
 {{end}}

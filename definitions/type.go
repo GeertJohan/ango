@@ -1,5 +1,9 @@
 package definitions
 
+import (
+	"strings"
+)
+
 // TypeCategory is the category to which a type belongs.
 // The different categories are defined as constants.
 type TypeCategory int
@@ -20,6 +24,12 @@ const (
 	// Struct types. eg: `type myStruct struct{}`
 	Struct
 )
+
+// StructField defines a single field in a struct
+type StructField struct {
+	Name string
+	Type *Type
+}
 
 // Type is the type of a parameter
 // It's value should be a valid go TypeName (http://golang.org/ref/spec#TypeName)
@@ -44,10 +54,43 @@ type Type struct {
 	StructFields []StructField
 }
 
-// StructField defines a single field in a struct
-type StructField struct {
-	Name string
-	Type *Type
+func (t *Type) CapitalizedName() string {
+	return strings.ToUpper(t.Name[:1]) + t.Name[1:]
+}
+
+func (t *Type) GoType() string {
+	switch t.Category {
+	case Builtin:
+		return t.Name
+	case Simple:
+		return t.SimpleType.CapitalizedName()
+	case Slice:
+		return `[]` + t.SliceElementType.CapitalizedName()
+	case Map:
+		return `map[` + t.MapKeyType.CapitalizedName() + `]` + t.MapValueType.CapitalizedName()
+	case Struct:
+		s := "struct {\n"
+		for _, f := range t.StructFields {
+			s += strings.ToUpper(f.Name[:1]) + f.Name[1:] + ` ` + f.Type.GoType() + "\n"
+		}
+		s += `}`
+		return s
+	default:
+		panic("unknown type")
+	}
+}
+
+func (t *Type) GoTypeName() string {
+	switch t.Category {
+	case Builtin:
+		return t.Name
+	case Simple, Slice, Map:
+		return t.CapitalizedName()
+	case Struct:
+		return `*` + t.CapitalizedName()
+	default:
+		panic("unknown type")
+	}
 }
 
 // Builtin types
