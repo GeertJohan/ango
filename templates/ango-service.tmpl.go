@@ -64,19 +64,19 @@ type angoOutError struct {
 	Message string `json:"message"`
 }
 
-{{range .Service.Types}}
-	type {{.CapitalizedName}} {{.GoType}}
-{{end}}
+{{range .Service.Types}}{{if not .GoIsBuiltin}}
+	type {{.CapitalizedName}} {{.GoTypeDefinition}}
+{{end}}{{end}}
 
 {{range .Service.ServerProcedures}}
 	type angoServerArgsData{{.CapitalizedName}} struct {
 		{{range .Args}}
-			{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
+			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 	}
 	{{if not .Oneway}}
 		type angoServerRetsData{{.CapitalizedName}} struct {
 			{{range .Rets}}
-				{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
+				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 		}
 	{{end}}
 {{end}}
@@ -85,18 +85,18 @@ type angoOutError struct {
 {{range .Service.ClientProcedures}}
 	type angoClientArgsData{{.CapitalizedName}} struct {
 		{{range .Args}}
-			{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
+			{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 	}
 	{{if not .Oneway}}
 		type angoClientRetsData{{.CapitalizedName}} struct {
 			{{range .Rets}}
-				{{.CapitalizedName}} {{.Type.GoTypeName}} `json:"{{.Name}}"` {{end}}
+				{{.CapitalizedName}} {{.GoTypeName}} `json:"{{.Name}}"` {{end}}
 		}
 	{{end}}
 {{end}}
 
-// SessionHandler defines all methods that can be called by the client
-type SessionHandler interface {
+// Session defines all methods that can be called by the client
+type Session interface {
 	// Stop is called when the session is closing (websocket closed)
 	Stop(err error)
 
@@ -110,12 +110,19 @@ type SessionHandler interface {
 // //++ TODO: rename to NewSessionFunc (?) when generated code gets it's own package
 // type NewSessionFunc func(*Client)(handler SessionHandler)
 
+//++ TODO:
+// Maybe change to more regocnizable approach ???
+// type Session interface{ /* ... */ }
+// type NewSessionFunc func(*Client)(session Session) // NewSessionFunc should be implemented by the user 
+// func NewServer(NewSessionFunc, *Config) *Server
+// type Server struct{ /*unexported fields*/ }
+
 // Server handles incomming http requests
 type Server struct {
 	// NewSession is called when a client connects.
 	// The given *Client provides procedures defined on the client.
-	// NewSession must return a valid SessionHandler, the methods on a SessionHandler can be called by the client javascript.
-	NewSession               func(*Client)(handler SessionHandler)
+	// NewSession must return a valid Session, the methods on a Session can be called by the client javascript.
+	NewSession               func(c *Client)(s Session)
 
 	// ErrorIncommingConnection is called when an incomming connection failed to setup properly.
 	ErrorIncommingConnection func(err error)
@@ -181,7 +188,7 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session.Stop(err)
 }
 
-func runProtocol(conn *websocket.Conn, client *Client, session SessionHandler) error {
+func runProtocol(conn *websocket.Conn, client *Client, session Session) error {
 	for {
 		// unmarshal root message structure
 		inMsg := &angoInMsg{}

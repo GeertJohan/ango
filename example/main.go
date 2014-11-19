@@ -21,7 +21,7 @@ type ChatServiceSession struct {
 }
 
 // NewChatServiceSession creates and returns a new ServiceHandler instance
-func NewChatServiceSession(client *chatservice.Client) chatservice.SessionHandler {
+func NewChatServiceSession(client *chatservice.Client) chatservice.Session {
 	session := &ChatServiceSession{
 		id:     idInc.Next(),
 		client: client,

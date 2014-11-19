@@ -17,14 +17,21 @@ func (p *Param) CapitalizedName() string {
 	return strings.ToUpper(p.Name[:1]) + p.Name[1:]
 }
 
-// // GoTypeName returns the Go TypeName for the Type
-// func (p Param) GoTypeName() string {
-// 	return p.Type.Name
-// }
+// GoTypeName returns the type
+func (p *Param) GoTypeName() string {
+	switch p.Type.Category {
+	case Builtin, Simple, Slice, Map:
+		return p.Type.GoName()
+	case Struct:
+		return `*` + p.Type.CapitalizedName()
+	default:
+		panic("unknown type category")
+	}
+}
 
 // TODO: move method to (t *Type)
 // JsTypeName returns the Js TypeName for the Type
-func (p Param) JsTypeName() string {
+func (p *Param) JsTypeName() string {
 	switch p.Type.Name {
 	case TypeString.Name:
 		return "string"
@@ -40,7 +47,7 @@ func (p Param) JsTypeName() string {
 
 // TODO: move method to (t *Type)
 // IsNumber returns true when the type is numeric
-func (p Param) IsNumber() bool {
+func (p *Param) IsNumber() bool {
 	switch p.Type.Name {
 	case TypeInt.Name, TypeInt8.Name, TypeInt16.Name, TypeInt32.Name, TypeInt64.Name,
 		TypeUint.Name, TypeUint8.Name, TypeUint16.Name, TypeUint32.Name, TypeUint64.Name:
@@ -116,7 +123,7 @@ func (ps Params) JsParameterList() string {
 func (ps Params) GoParameterList() string {
 	params := make([]string, 0, len(ps))
 	for _, p := range ps {
-		params = append(params, p.Name+" "+p.Type.GoTypeName())
+		params = append(params, p.Name+" "+p.GoTypeName())
 	}
 	return strings.Join(params, ", ")
 }

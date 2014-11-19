@@ -54,40 +54,42 @@ type Type struct {
 	StructFields []StructField
 }
 
+// CapitalizedName returns the name, capitalized
 func (t *Type) CapitalizedName() string {
 	return strings.ToUpper(t.Name[:1]) + t.Name[1:]
 }
 
-func (t *Type) GoType() string {
+// GoIsBuiltin returns true when the type is a Go builtin type
+func (t *Type) GoIsBuiltin() bool {
+	return t.Category == Builtin
+}
+
+// GoName returns the Go identifier for this type.
+// The Go identifier is capitalized when the type is not a builtin Go type.
+func (t *Type) GoName() string {
+	if t.Category == Builtin {
+		return t.Name
+	}
+	return t.CapitalizedName()
+}
+
+func (t *Type) GoTypeDefinition() string {
 	switch t.Category {
 	case Builtin:
 		return t.Name
 	case Simple:
-		return t.SimpleType.CapitalizedName()
+		return t.SimpleType.GoName()
 	case Slice:
-		return `[]` + t.SliceElementType.CapitalizedName()
+		return `[]` + t.SliceElementType.GoName()
 	case Map:
-		return `map[` + t.MapKeyType.CapitalizedName() + `]` + t.MapValueType.CapitalizedName()
+		return `map[` + t.MapKeyType.GoName() + `]` + t.MapValueType.GoName()
 	case Struct:
 		s := "struct {\n"
 		for _, f := range t.StructFields {
-			s += strings.ToUpper(f.Name[:1]) + f.Name[1:] + ` ` + f.Type.GoType() + "\n"
+			s += strings.ToUpper(f.Name[:1]) + f.Name[1:] + ` ` + f.Type.GoTypeDefinition() + "\n"
 		}
 		s += `}`
 		return s
-	default:
-		panic("unknown type")
-	}
-}
-
-func (t *Type) GoTypeName() string {
-	switch t.Category {
-	case Builtin:
-		return t.Name
-	case Simple, Slice, Map:
-		return t.CapitalizedName()
-	case Struct:
-		return `*` + t.CapitalizedName()
 	default:
 		panic("unknown type")
 	}
