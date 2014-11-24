@@ -57,6 +57,13 @@ func generateGo(service *definitions.Service) error {
 		formattedSource = generatedSourceBuffer.Bytes()
 	}
 
+	// create outputDir
+	err = os.Mkdir(outputDir, 0755)
+	if err != nil && !os.IsExist(err) {
+		fmt.Printf("Error creating generated package directory: %v", err)
+		os.Exit(1)
+	}
+
 	// create outputFile
 	outputFileName := "server.gen.go"
 	outputFileAbs := filepath.Join(outputDir, outputFileName)
