@@ -1,9 +1,8 @@
 package main
 
 import (
-	"net/http"
-
 	"code.google.com/p/go.net/websocket"
+	"net/http"
 )
 
 // CalculatorHandlerIface should be implemented by the implementation part of the protocol

@@ -3,9 +3,8 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
-	"io"
-
 	"github.com/GeertJohan/ango/definitions"
+	"io"
 	// "os"
 	"sort"
 )

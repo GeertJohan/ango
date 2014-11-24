@@ -7,6 +7,7 @@ import (
 
 	"github.com/GeertJohan/ango/example/chatservice"
 
+	"github.com/GeertJohan/go.incremental"
 	"github.com/GeertJohan/go.rice"
 )
 

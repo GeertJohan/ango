@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/foize/go.sgr"
+	"github.com/howeyc/fsnotify"
 	"go/build"
 	"io"
 	"os"
@@ -12,8 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/howeyc/fsnotify"
 )
 
 var (
