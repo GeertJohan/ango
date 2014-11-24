@@ -3,10 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/GeertJohan/ango/definitions"
 	"io"
-	// "os"
 	"sort"
+
+	"github.com/GeertJohan/ango/definitions"
 )
 
 var (

@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/GeertJohan/go.rice"
 	"os"
 	"text/template"
+
+	"github.com/GeertJohan/go.rice"
 )
 
 var (

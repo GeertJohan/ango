@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/GeertJohan/ango/definitions"
-	"github.com/GeertJohan/go.ask"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/GeertJohan/ango/definitions"
+	"github.com/GeertJohan/go.ask"
 )
 
 type dataJs struct {

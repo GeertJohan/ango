@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/GeertJohan/ango/definitions"
-	"github.com/GeertJohan/go.ask"
 	"go/format"
 	"os"
 	"path/filepath"
+
+	"github.com/GeertJohan/ango/definitions"
+	"github.com/GeertJohan/go.ask"
 )
 
 type dataGo struct {
